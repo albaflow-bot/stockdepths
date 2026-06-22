@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "AI 주식 타이밍 알리미",
+    "slug": "stock-timing",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "stocktiming",
+    "platforms": [
+      "android",
+      "web"
+    ],
+    "android": {
+      "package": "com.bindesk.stocktiming",
+      "versionCode": 1
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "extra": {
+      "note": "EXPO_PUBLIC_API_BASE_URL points the client at the picks API (server)."
+    },
+    "plugins": [
+      "expo-asset"
+    ]
+  }
+}

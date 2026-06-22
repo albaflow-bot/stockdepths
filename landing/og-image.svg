@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="AI 주식 타이밍 알리미 — 정직한 성적표와 5년 백테스트">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#13314F" />
+      <stop offset="1" stop-color="#0F2840" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <text x="80" y="150" fill="#9FB4C9" font-family="Segoe UI, Apple SD Gothic Neo, Malgun Gothic, sans-serif" font-size="30" font-weight="700">AI 주식 타이밍 알리미</text>
+  <text x="80" y="245" fill="#FFFFFF" font-family="Segoe UI, Apple SD Gothic Neo, Malgun Gothic, sans-serif" font-size="62" font-weight="800">추천만 보여주지 않습니다.</text>
+  <text x="80" y="325" fill="#FFFFFF" font-family="Segoe UI, Apple SD Gothic Neo, Malgun Gothic, sans-serif" font-size="62" font-weight="800">
+    <tspan fill="#4ADE80">5년 백테스트</tspan><tspan fill="#FFFFFF">와 </tspan><tspan fill="#4ADE80">정직한 성적표</tspan><tspan fill="#FFFFFF">.</tspan>
+  </text>
+  <text x="80" y="395" fill="#C7D3E0" font-family="Segoe UI, Apple SD Gothic Neo, Malgun Gothic, sans-serif" font-size="28">벤치마크 대비 누적 초과수익 · 적중률 · 건당 평균 · 최대낙폭을 정직하게 공개</text>
+
+  <!-- mini scorecard card -->
+  <g transform="translate(80,450)">
+    <rect width="1040" height="120" rx="16" fill="#1B3D5E" stroke="#2A5078" />
+    <text x="28" y="44" fill="#9FB4C9" font-family="sans-serif" font-size="20">벤치마크 대비 누적 초과수익</text>
+    <text x="28" y="92" fill="#4ADE80" font-family="sans-serif" font-size="44" font-weight="800">+6.5%p</text>
+    <text x="430" y="44" fill="#9FB4C9" font-family="sans-serif" font-size="20">적중률 59% · 건당 +4.6% · MDD -12.3%</text>
+    <rect x="430" y="62" width="560" height="14" rx="7" fill="#0F2840" />
+    <rect x="430" y="62" width="430" height="14" rx="7" fill="#4ADE80" />
+  </g>
+</svg>

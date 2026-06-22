@@ -1,0 +1,65 @@
+{
+  "market": "US",
+  "date": "2026-06-22",
+  "generatedAt": "2026-06-22T01:21:58.977Z",
+  "picks": [
+    {
+      "symbol": "JPM",
+      "companyName": "JPMorgan Chase",
+      "rationale": "5년 +145%로 견조하면서 변동성 24.46%·MDD -38.77%로 후보 중 가장 안정적, 1M +9.98%·3M +13.51% 모멘텀에 200일선 +6.56% 상회",
+      "confidence": "high",
+      "risk": "low",
+      "action": "추세 안정적, 분할 매수로 접근 가능"
+    },
+    {
+      "symbol": "GOOGL",
+      "companyName": "Alphabet",
+      "rationale": "1Y +109.76%·5Y +204.81% 강한 추세에 200일선 +18.44% 상회, 최근 1M -5.01% 눌림이나 변동성 31.38%로 대형주 중 양호",
+      "confidence": "high",
+      "risk": "medium",
+      "action": "단기 조정 구간, 분할 진입 고려"
+    },
+    {
+      "symbol": "AVGO",
+      "companyName": "Broadcom",
+      "rationale": "3M +28.88%·1W +6.69%로 모멘텀 가속, 5Y +870.98%에 200일선 +14.53% 상회하나 변동성 43.55%로 변동 큼",
+      "confidence": "medium",
+      "risk": "high",
+      "action": "강세 지속 시 추격보단 눌림 대기 권장"
+    },
+    {
+      "symbol": "AAPL",
+      "companyName": "Apple",
+      "rationale": "3M +19.81%·1Y +52.93%로 회복세, 200일선 +11.28% 상회하며 변동성 27.53%·MDD -33.36%로 대형주 중 안정적",
+      "confidence": "medium",
+      "risk": "medium",
+      "action": "50일선 부근 분할 매수 관점"
+    },
+    {
+      "symbol": "V",
+      "companyName": "Visa",
+      "rationale": "변동성 22.85%·MDD -28.6%로 후보 중 가장 낮은 리스크, 3M +9.41% 회복 중이나 1Y -7.83%·200일선 -0.22%로 추세 전환 확인 필요",
+      "confidence": "medium",
+      "risk": "low",
+      "action": "200일선 회복 확인 후 진입 권장"
+    }
+  ],
+  "marketContext": "대형 기술주는 1개월 단기 조정 국면이나 장기 추세는 견조하며, 금융주(JPM)와 반도체(AVGO·AMD)가 상대적 강세를 보이는 차별화 장세입니다.",
+  "provider": "claude-cli",
+  "model": "claude-bindesk-oauth",
+  "disclaimer": "AI는 보장이 아닌 참고 조언입니다. 투자 판단과 책임은 본인에게 있습니다.",
+  "universe": [
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "AMZN",
+    "GOOGL",
+    "META",
+    "TSLA",
+    "AVGO",
+    "AMD",
+    "NFLX",
+    "JPM",
+    "V"
+  ]
+}

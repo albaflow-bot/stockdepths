@@ -1,0 +1,6 @@
+# BinDesk 자동 추가 — 시크릿 유출 방지
+.env
+.env.*
+*.pem
+*.key
+secrets/

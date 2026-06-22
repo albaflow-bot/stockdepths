@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="AI 주식 타이밍 알리미">
+  <rect width="64" height="64" rx="14" fill="#13314F" />
+  <polyline points="14,42 26,30 36,38 50,18" fill="none" stroke="#4ADE80" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="50" cy="18" r="4" fill="#4ADE80" />
+</svg>

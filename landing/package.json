@@ -1,0 +1,10 @@
+{
+  "name": "stock-timing-landing",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Marketing landing page for AI 주식 타이밍 알리미 (static, zero-dependency).",
+  "scripts": {
+    "test": "node --test",
+    "serve": "node serve.mjs"
+  }
+}
