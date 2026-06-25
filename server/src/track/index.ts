@@ -9,6 +9,13 @@ export { recordArtifact, makeArtifactRecorder } from "./recorder.js";
 export type { RecordOptions } from "./recorder.js";
 export { ScorecardService, periodStart } from "./scorecard.js";
 export type { ScorecardServiceOptions } from "./scorecard.js";
+export { TimingAccuracyService } from "./timingAccuracy.js";
+export type {
+  TimingAccuracy,
+  TimingAccuracyMetrics,
+  TimingHitStats,
+  TimingAccuracyOptions,
+} from "./timingAccuracy.js";
 export { SeriesIndex, maxDrawdownFromValues } from "./prices.js";
 export { ALL_PERIODS } from "./types.js";
 export type {

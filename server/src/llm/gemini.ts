@@ -10,7 +10,9 @@
 
 import type { LlmCompletion, LlmProvider, LlmRequest } from "./types.js";
 
-const DEFAULT_MODEL = "gemini-2.0-flash";
+// gemini-2.0-flash 는 일부 키에서 free-tier 쿼터가 0 (HTTP 429). 2.5-flash 는 무료
+// 쿼터가 살아있어 기본으로 사용. GEMINI_PICKS_MODEL 로 override 가능.
+const DEFAULT_MODEL = "gemini-2.5-flash";
 
 /** Minimal injectable fetch shape (subset of WHATWG fetch). */
 export type JsonFetcher = (
@@ -58,8 +60,11 @@ export class GeminiProvider implements LlmProvider {
       contents: [{ role: "user", parts: [{ text: req.user }] }],
       generationConfig: {
         responseMimeType: "application/json",
-        maxOutputTokens: req.maxTokens ?? 4096,
+        maxOutputTokens: req.maxTokens ?? 8192,
         temperature: 0.6,
+        // gemini-2.5-flash 는 thinking 모델 — 기본 thinking 이 출력 토큰 예산을 먹어 JSON 이
+        // 잘린다(unbalanced). thinkingBudget:0 으로 끄고 전 예산을 picks JSON 출력에 쓴다.
+        thinkingConfig: { thinkingBudget: 0 },
       },
     });
 

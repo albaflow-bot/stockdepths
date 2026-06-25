@@ -26,6 +26,9 @@ export const tokens = {
     positive: "#15803D",
     negative: "#B91C1C",
     warning: "#B45309",
+    // KR 시장 하락 관례색(파랑). KR 상승=빨강(=negative red)·하락=파랑 (SPEC §3.2-Δ
+    // 색상 규약). US 는 상승=초록(positive)·하락=빨강(negative) 그대로.
+    marketBlue: "#1D4ED8",
 
     // Badge tone surfaces (soft bg + readable fg).
     positiveBg: "#DCFCE7",

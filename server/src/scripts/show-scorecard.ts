@@ -9,7 +9,7 @@
  */
 
 import { getMarketRegistry } from "../market/index.js";
-import { TrackRecordStore } from "../track/store.js";
+import { createTrackStore } from "../storage/index.js";
 import { ScorecardService } from "../track/scorecard.js";
 
 function todayUtc(): string {
@@ -22,7 +22,8 @@ function fmt(v: number | null, suffix = ""): string {
 
 async function main() {
   const asOf = process.argv.find((a) => /^\d{4}-\d{2}-\d{2}$/.test(a)) ?? todayUtc();
-  const store = new TrackRecordStore();
+  const store = createTrackStore();
+  await store.hydrate(); // load from Supabase when configured (no-op for disk)
   const total = store.readAll().length;
   if (total === 0) {
     console.log("track record is empty — run `npm run batch:daily` first to log recommendations.");

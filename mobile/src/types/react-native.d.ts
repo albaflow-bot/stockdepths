@@ -46,7 +46,7 @@ declare module "react-native" {
     testID?: string;
     accessibilityRole?: string;
     accessibilityLabel?: string;
-    accessibilityState?: { expanded?: boolean; disabled?: boolean; selected?: boolean };
+    accessibilityState?: { expanded?: boolean; disabled?: boolean; selected?: boolean; checked?: boolean };
     disabled?: boolean;
   }
   export const Pressable: React.ComponentType<PressableProps>;
@@ -55,8 +55,21 @@ declare module "react-native" {
     contentContainerStyle?: StyleProp;
     horizontal?: boolean;
     showsVerticalScrollIndicator?: boolean;
+    showsHorizontalScrollIndicator?: boolean;
+    stickyHeaderIndices?: number[];
+    keyboardShouldPersistTaps?: "always" | "never" | "handled";
   }
   export const ScrollView: React.ComponentType<ScrollViewProps>;
+
+  export interface ModalProps {
+    visible?: boolean;
+    transparent?: boolean;
+    animationType?: "none" | "slide" | "fade";
+    onRequestClose?: () => void;
+    children?: React.ReactNode;
+    testID?: string;
+  }
+  export const Modal: React.ComponentType<ModalProps>;
 
   export interface ActivityIndicatorProps {
     size?: "small" | "large" | number;

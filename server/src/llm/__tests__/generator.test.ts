@@ -72,6 +72,13 @@ describe("orderProviders", () => {
     const g = stubProvider("gemini", {});
     expect(orderProviders([a, g], 0, 0.8).map((p) => p.name)).toEqual(["gemini"]);
   });
+  it("an explicit primary overrides the load default (free-tier: gemini first)", () => {
+    const a = stubProvider("anthropic", {});
+    const g = stubProvider("gemini", {});
+    // load=0 would normally prefer Anthropic, but primary=gemini wins; Claude stays as failover.
+    expect(orderProviders([a, g], 0, 0.8, "gemini").map((p) => p.name)).toEqual(["gemini", "anthropic"]);
+    expect(orderProviders([a, g], 0.9, 0.8, "anthropic").map((p) => p.name)).toEqual(["anthropic", "gemini"]);
+  });
 });
 
 describe("makePicksGenerator", () => {

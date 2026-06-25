@@ -16,6 +16,7 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import type { Market } from "../market/types.js";
 import type { Pick } from "../llm/types.js";
+import type { TimingSignal, DailyMarketBrief } from "../timing/types.js";
 
 export interface DailyPicksArtifact {
   market: Market;
@@ -32,6 +33,18 @@ export interface DailyPicksArtifact {
   disclaimer: string;
   /** Symbols considered this run (for auditing / backtest seeding). */
   universe: string[];
+  /**
+   * Daily market brief produced in the SAME oneshot (SPEC §5.3). Present only when
+   * the batch ran with market context (overview + news); omitted on the legacy
+   * picks-only path.
+   */
+  brief?: DailyMarketBrief;
+  /**
+   * DailyBatch timing signals for picks + TOP/popular tickers (SPEC §5.4), produced
+   * in the same oneshot. Source is always "dailyBatch" here (OnDeviceRule signals
+   * are evaluated on-device). Present only on the market-context path.
+   */
+  signals?: TimingSignal[];
 }
 
 export interface ArtifactStoreOptions {
@@ -84,5 +97,19 @@ export class ArtifactStore {
     } catch {
       // best-effort persistence; never fail the batch on a disk problem
     }
+  }
+
+  /**
+   * Load async-backend rows into memory before the synchronous get() (no-op for
+   * the disk backend, which reads disk lazily on get()). Overridden by the
+   * Supabase-backed store so serverless requests can hydrate before routing.
+   */
+  async hydrate(_market?: Market, _date?: string): Promise<void> {
+    // disk backend: nothing to preload
+  }
+
+  /** Await any pending async persistence (no-op for disk; Supabase awaits writes). */
+  async flush(): Promise<void> {
+    // disk backend: writes are synchronous
   }
 }

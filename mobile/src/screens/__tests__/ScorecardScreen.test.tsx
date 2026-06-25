@@ -71,4 +71,31 @@ describe("ScorecardScreen", () => {
     fireEvent.click(screen.getByTestId("retry-button"));
     await waitFor(() => expect(screen.getByTestId("scorecard-hero")).toBeInTheDocument());
   });
+
+  it("renders the timing-signal accuracy panel for the selected period (SPEC §5.6)", async () => {
+    const timingLoader = async () => ({
+      asOf: "2026-06-30",
+      horizonDays: 7,
+      minSample: 5,
+      criterion: "신호일 종가 대비 7일 후 종가 기준 — 매수는 상승, 매도는 하락 시 적중.",
+      periods: [
+        { period: "1M" as const, periodStart: "2026-05-30", asOf: "2026-06-30", horizonDays: 7,
+          buy: { total: 6, evaluated: 6, hits: 4, hitRatePct: 66.67 },
+          sell: { total: 4, evaluated: 4, hits: 3, hitRatePct: 75 },
+          overall: { total: 10, evaluated: 10, hits: 7, hitRatePct: 70 },
+          lowSample: false },
+      ],
+    });
+    render(<ScorecardScreen loader={loader} timingLoader={timingLoader} />);
+    await waitFor(() => expect(screen.getByTestId("timing-accuracy")).toBeInTheDocument());
+    expect(screen.getByText("타이밍 신호 적중률")).toBeInTheDocument();
+    expect(screen.getByTestId("timing-accuracy-buy-rate")).toHaveTextContent("66.67%");
+    expect(screen.getByTestId("timing-accuracy-criterion").textContent).toContain("적중 기준");
+  });
+
+  it("hides the timing panel gracefully when timing data is unavailable", async () => {
+    render(<ScorecardScreen loader={loader} timingLoader={async () => undefined} />);
+    await waitFor(() => expect(screen.getByTestId("scorecard-hero")).toBeInTheDocument());
+    expect(screen.queryByTestId("timing-accuracy")).toBeNull();
+  });
 });

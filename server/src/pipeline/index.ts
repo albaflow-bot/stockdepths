@@ -3,10 +3,33 @@
  * Downstream code (scheduler, API, backtester seeding) imports from here.
  */
 
-export { runDailyBatch } from "./dailyBatch.js";
+export { runDailyBatch, buildMarketContext } from "./dailyBatch.js";
 export type { RunDailyBatchOptions } from "./dailyBatch.js";
 export { ArtifactStore } from "./artifactStore.js";
 export type { DailyPicksArtifact, ArtifactStoreOptions } from "./artifactStore.js";
+
+export { makeDailyBatchGenerator, parseDailyBatch, DAILY_BATCH_SYSTEM_PROMPT } from "../llm/dailyBatch.js";
+export type {
+  DailyBatchGenerator,
+  DailyBatchGenerated,
+  DailyBatchGenerateInput,
+  DailyBatchMarketContext,
+  RankedTickerRef,
+  BriefNewsRef,
+} from "../llm/dailyBatch.js";
+export {
+  TimingSignalStore,
+  MarketBriefStore,
+  recordTimingArtifacts,
+  makeTimingRecorder,
+} from "../timing/index.js";
+export type {
+  TimingSignal,
+  DailyMarketBrief,
+  TimingSignalEntry,
+  MarketBriefEntry,
+  TimingRecordOptions,
+} from "../timing/index.js";
 
 export { buildTickerFeatures } from "../features/indicators.js";
 export type { TickerFeatures } from "../features/indicators.js";

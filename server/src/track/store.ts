@@ -93,4 +93,17 @@ export class TrackRecordStore {
   readSince(since: string): TrackRecordEntry[] {
     return this.readAll().filter((e) => e.date >= since);
   }
+
+  /**
+   * Load async-backend rows into memory before reads (disk loads lazily here).
+   * Overridden by the Supabase-backed store.
+   */
+  async hydrate(): Promise<void> {
+    this.ensureLoaded();
+  }
+
+  /** Await any pending async persistence (no-op for disk; Supabase awaits writes). */
+  async flush(): Promise<void> {
+    // disk backend: appends are synchronous
+  }
 }

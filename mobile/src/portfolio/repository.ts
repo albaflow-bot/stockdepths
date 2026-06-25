@@ -19,8 +19,10 @@ const STORAGE_KEY = "bindesk:portfolio";
 
 function normalizeSymbol(symbol: string): string {
   const s = symbol.trim().toUpperCase();
-  if (!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(s)) {
-    throw new PortfolioValidationError("종목 코드를 올바르게 입력해 주세요 (예: AAPL).");
+  // 미국 티커(AAPL)와 한국 단축코드(005930) 둘 다 허용 — 코드 없이 한글 검색으로
+  // 담는 KR 종목도 보유/관심에 들어가야 한다(SPEC §3.2-Δ). 영숫자/점/하이픈, 1~10자.
+  if (!/^[A-Z0-9][A-Z0-9.\-]{0,9}$/.test(s)) {
+    throw new PortfolioValidationError("종목 코드를 올바르게 입력해 주세요 (예: AAPL · 005930).");
   }
   return s;
 }
@@ -30,6 +32,33 @@ function validatePositive(value: number, label: string): number {
     throw new PortfolioValidationError(`${label}는 0보다 큰 숫자여야 합니다.`);
   }
   return value;
+}
+
+const THRESHOLD_LABELS: Record<string, string> = {
+  targetPrice: "목표가",
+  stopLossPrice: "손절가",
+  targetReturnPct: "목표 수익률",
+  stopLossPct: "손절선",
+};
+
+/** Pick the OnDeviceRule threshold fields from an input, validating any present. */
+function optionalThresholds(input: HoldingInput): Partial<Holding> {
+  const out: Partial<Holding> = {};
+  for (const key of Object.keys(THRESHOLD_LABELS) as Array<keyof typeof THRESHOLD_LABELS>) {
+    const v = input[key as keyof HoldingInput] as number | undefined;
+    if (v != null) out[key as keyof Holding] = validatePositive(v, THRESHOLD_LABELS[key]!) as never;
+  }
+  return out;
+}
+
+/** Apply a threshold patch in-place: null clears the override, a number sets it. */
+function applyThresholdPatch(next: Holding, patch: Partial<Holding>): void {
+  for (const key of Object.keys(THRESHOLD_LABELS) as Array<keyof Holding>) {
+    if (!(key in patch)) continue;
+    const v = patch[key] as number | null | undefined;
+    if (v == null) delete next[key];
+    else next[key] = validatePositive(v as number, THRESHOLD_LABELS[key]!) as never;
+  }
 }
 
 export interface RepositoryDeps {
@@ -100,6 +129,7 @@ export class PortfolioRepository {
       quantity,
       note: input.note?.trim() || undefined,
       createdAt: this.now(),
+      ...optionalThresholds(input),
     };
     const portfolio = await this.load();
     portfolio.holdings = [holding, ...portfolio.holdings];
@@ -108,7 +138,12 @@ export class PortfolioRepository {
 
   async updateHolding(
     id: string,
-    patch: Partial<Pick<Holding, "costBasis" | "quantity" | "note">>,
+    patch: Partial<
+      Pick<
+        Holding,
+        "costBasis" | "quantity" | "note" | "targetPrice" | "stopLossPrice" | "targetReturnPct" | "stopLossPct"
+      >
+    >,
   ): Promise<Portfolio> {
     const portfolio = await this.load();
     portfolio.holdings = portfolio.holdings.map((h) => {
@@ -119,6 +154,8 @@ export class PortfolioRepository {
         next.quantity = patch.quantity == null ? undefined : validatePositive(patch.quantity, "수량");
       }
       if (patch.note !== undefined) next.note = patch.note?.trim() || undefined;
+      // Threshold patches: a null clears the override, a positive number sets it.
+      applyThresholdPatch(next, patch);
       return next;
     });
     return this.save(portfolio);

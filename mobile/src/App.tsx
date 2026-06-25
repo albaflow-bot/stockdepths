@@ -6,6 +6,7 @@ import { isSafeMode, markStable, recordBootStart } from "./resilience/safeMode";
 import { addBreadcrumb, installGlobalErrorHandlers, readErrors } from "./resilience/errorLog";
 import { AppShell } from "./navigation/AppShell";
 import { PersonaGate } from "./navigation/PersonaGate";
+import { registerForPushNotifications } from "./notifications/push";
 
 /** Recovery screen shown after 3 consecutive immediate crashes (RESILIENCE CONTRACT). */
 function SafeModeScreen({ onRecover }: { onRecover: () => void }) {
@@ -44,6 +45,9 @@ export default function App() {
   useEffect(() => {
     installGlobalErrorHandlers();
     addBreadcrumb("app boot");
+    // Register for the daily push digest (native only; a no-op on web and when the
+    // server/Firebase isn't set up yet — never blocks or crashes boot).
+    void registerForPushNotifications();
     // If we stay up a few seconds, this boot was healthy — reset the strike count.
     const t = setTimeout(() => markStable(), 4000);
     return () => clearTimeout(t);

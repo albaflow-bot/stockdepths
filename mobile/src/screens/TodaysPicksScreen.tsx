@@ -1,10 +1,11 @@
-import { useEffect } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
 import { tokens } from "../theme/tokens";
 import { trackPickView } from "../analytics/analytics";
 import { DisclaimerBanner } from "../components/DisclaimerBanner";
 import { PickCard } from "../components/PickCard";
 import { LoadingView, EmptyView, ErrorView } from "../components/StateViews";
+import { fetchTodaysPicks } from "../data/picksClient";
 import { useTodaysPicks, type ArtifactLoader } from "./useTodaysPicks";
 import { pickMatchesPersona } from "../persona/matching";
 import type { PersonaConfig } from "../persona/types";
@@ -21,7 +22,14 @@ export interface TodaysPicksScreenProps {
  * top, above all predictions, in every state (SPEC Task 6).
  */
 export function TodaysPicksScreen({ loader, personaConfig }: TodaysPicksScreenProps) {
-  const { status, artifact, errorMessage, reload } = useTodaysPicks(loader);
+  const [market, setMarket] = useState<"US" | "KR">("US");
+  // When no loader is injected (production), load the selected market; switching
+  // markets swaps the loader and useTodaysPicks reloads.
+  const effectiveLoader = useMemo<ArtifactLoader>(
+    () => loader ?? (() => fetchTodaysPicks(market)),
+    [loader, market],
+  );
+  const { status, artifact, errorMessage, reload } = useTodaysPicks(effectiveLoader);
 
   // Funnel: the user viewed today's picks (fires once per successful load).
   useEffect(() => {
@@ -35,6 +43,7 @@ export function TodaysPicksScreen({ loader, personaConfig }: TodaysPicksScreenPr
       testID="todays-picks-screen"
     >
       <Text style={styles.title}>오늘의 추천</Text>
+      <MarketToggle market={market} onSelect={setMarket} />
       {artifact ? (
         <Text style={styles.subtitle}>
           {artifact.date} · {marketLabel(artifact.market)}
@@ -75,7 +84,38 @@ export function TodaysPicksScreen({ loader, personaConfig }: TodaysPicksScreenPr
 }
 
 function marketLabel(market: string): string {
-  return market === "US" ? "미국 (나스닥/S&P)" : market;
+  if (market === "US") return "미국 (나스닥/S&P)";
+  if (market === "KR") return "한국 (코스피/코스닥)";
+  return market;
+}
+
+const MARKETS: { key: "US" | "KR"; label: string }[] = [
+  { key: "US", label: "미국" },
+  { key: "KR", label: "한국" },
+];
+
+/** 미국/한국 segmented toggle — picks which market's shared artifact to show. */
+function MarketToggle({ market, onSelect }: { market: "US" | "KR"; onSelect: (m: "US" | "KR") => void }) {
+  return (
+    <View style={styles.marketBar} accessibilityRole="tablist" testID="market-toggle">
+      {MARKETS.map((m) => {
+        const active = m.key === market;
+        return (
+          <Pressable
+            key={m.key}
+            onPress={() => onSelect(m.key)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
+            accessibilityLabel={marketLabel(m.key)}
+            testID={`market-${m.key}`}
+            style={[styles.marketSegment, active ? styles.marketSegmentActive : null]}
+          >
+            <Text style={[styles.marketLabelText, active ? styles.marketLabelActive : null]}>{m.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
 }
 
 function formatGeneratedAt(iso: string): string {
@@ -99,4 +139,16 @@ const styles = StyleSheet.create({
   contextLabel: { fontSize: tokens.font.size.xs, color: tokens.color.textMuted, marginBottom: 2 },
   contextText: { fontSize: tokens.font.size.md, color: tokens.color.textPrimary },
   footer: { fontSize: tokens.font.size.xs, color: tokens.color.textMuted, marginTop: tokens.space.sm, textAlign: "center" },
+  marketBar: {
+    flexDirection: "row",
+    backgroundColor: tokens.color.surfaceAlt,
+    borderRadius: tokens.radius.md,
+    padding: tokens.space.xs,
+    marginTop: tokens.space.sm,
+    marginBottom: tokens.space.md,
+  },
+  marketSegment: { flex: 1, paddingVertical: tokens.space.sm, alignItems: "center", borderRadius: tokens.radius.sm },
+  marketSegmentActive: { backgroundColor: tokens.color.surface, borderWidth: 1, borderColor: tokens.color.primary },
+  marketLabelText: { fontSize: tokens.font.size.sm, color: tokens.color.textSecondary, fontWeight: tokens.font.weight.medium },
+  marketLabelActive: { color: tokens.color.primary, fontWeight: tokens.font.weight.bold },
 });

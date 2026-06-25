@@ -21,6 +21,7 @@
       "note": "EXPO_PUBLIC_API_BASE_URL points the client at the picks API (server)."
     },
     "plugins": [
+      "expo-notifications",
       "expo-asset"
     ]
   }

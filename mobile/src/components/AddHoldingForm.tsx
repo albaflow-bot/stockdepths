@@ -7,11 +7,17 @@ import type { HoldingInput } from "../portfolio/types";
 export interface AddHoldingFormProps {
   /** Returns an error message to display, or null/undefined on success. */
   onAdd: (input: HoldingInput) => Promise<string | null> | string | null;
+  /** Prefill the symbol (e.g. chosen from search — code 없이 담기 흐름). */
+  initialSymbol?: string;
+  /** Lock the symbol field read-only (search 로 이미 종목을 고른 경우). */
+  lockSymbol?: boolean;
+  /** Override the card title (e.g. "삼성전자 보유 추가"). */
+  title?: string;
 }
 
 /** Form to add a holding: symbol + cost basis (required) + quantity (optional). */
-export function AddHoldingForm({ onAdd }: AddHoldingFormProps) {
-  const [symbol, setSymbol] = useState("");
+export function AddHoldingForm({ onAdd, initialSymbol, lockSymbol, title }: AddHoldingFormProps) {
+  const [symbol, setSymbol] = useState(initialSymbol ?? "");
   const [cost, setCost] = useState("");
   const [qty, setQty] = useState("");
   const [error, setError] = useState<string | undefined>(undefined);
@@ -33,22 +39,29 @@ export function AddHoldingForm({ onAdd }: AddHoldingFormProps) {
       return;
     }
     setError(undefined);
-    setSymbol("");
+    if (!lockSymbol) setSymbol(""); // 검색에서 고른 종목은 유지(잠금)
     setCost("");
     setQty("");
   };
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>보유 종목 추가</Text>
-      <TextField
-        label="종목"
-        value={symbol}
-        onChangeText={setSymbol}
-        placeholder="예: AAPL"
-        autoCapitalize="characters"
-        testID="holding-symbol-input"
-      />
+      <Text style={styles.title}>{title ?? "보유 종목 추가"}</Text>
+      {lockSymbol ? (
+        <View style={styles.lockedSymbol} testID="holding-symbol-locked">
+          <Text style={styles.lockedLabel}>종목</Text>
+          <Text style={styles.lockedValue}>{symbol}</Text>
+        </View>
+      ) : (
+        <TextField
+          label="종목"
+          value={symbol}
+          onChangeText={setSymbol}
+          placeholder="예: AAPL"
+          autoCapitalize="characters"
+          testID="holding-symbol-input"
+        />
+      )}
       <View style={styles.row}>
         <View style={styles.col}>
           <TextField
@@ -90,6 +103,9 @@ const styles = StyleSheet.create({
     marginBottom: tokens.space.md,
   },
   title: { fontSize: tokens.font.size.md, fontWeight: tokens.font.weight.bold, color: tokens.color.textPrimary },
+  lockedSymbol: { gap: tokens.space.xs },
+  lockedLabel: { fontSize: tokens.font.size.xs, color: tokens.color.textSecondary, fontWeight: tokens.font.weight.medium },
+  lockedValue: { fontSize: tokens.font.size.lg, fontWeight: tokens.font.weight.bold, color: tokens.color.textPrimary },
   row: { flexDirection: "row", gap: tokens.space.md },
   col: { flex: 1 },
   error: { fontSize: tokens.font.size.sm, color: tokens.color.negative },

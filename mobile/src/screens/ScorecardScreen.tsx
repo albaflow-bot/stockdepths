@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { tokens, badgeColors } from "../theme/tokens";
 import { PeriodFilter } from "../components/PeriodFilter";
@@ -6,14 +6,17 @@ import { ComparisonBars } from "../components/ComparisonBars";
 import { WinRateBar } from "../components/WinRateBar";
 import { MetricTile } from "../components/MetricTile";
 import { RealizedVsBacktest } from "../components/RealizedVsBacktest";
+import { TimingAccuracyPanel } from "../components/TimingAccuracyPanel";
 import { LoadingView, ErrorView } from "../components/StateViews";
 import { fmtSignedPct, fmtPct, returnTone } from "../formatters";
-import { FILTER_PERIODS, periodLabel, type ScorecardMetrics, type ScorecardPeriod } from "../types/scorecard";
+import { FILTER_PERIODS, periodLabel, type ScorecardMetrics, type ScorecardPeriod, type TimingAccuracy } from "../types/scorecard";
 import { useScorecard, type ScorecardStatus } from "./useScorecard";
-import type { ScorecardLoader } from "../data/scorecardClient";
+import { fetchTimingAccuracy, type ScorecardLoader, type TimingAccuracyLoader } from "../data/scorecardClient";
 
 export interface ScorecardScreenProps {
   loader?: ScorecardLoader;
+  /** Timing-accuracy loader (SPEC §5.6). Graceful — undefined hides the panel. */
+  timingLoader?: TimingAccuracyLoader;
   /** Initial period (tests). */
   initialPeriod?: ScorecardPeriod;
 }
@@ -21,13 +24,26 @@ export interface ScorecardScreenProps {
 const DEFAULT_PERIOD: ScorecardPeriod = "1M";
 
 /**
- * 성적표 tab — honest performance (SPEC Task 9). Headline = benchmark-relative
- * cumulative excess return, with win rate, per-trade average, and MDD, filterable
- * by 1W/1M/3M/YTD, shown as infographics alongside the 5Y backtest aggregate.
+ * 성적표 tab — honest performance (SPEC Task 9 + §5.6). Headline = benchmark-relative
+ * cumulative excess return (win rate, per-trade average, MDD), PLUS the timing-signal
+ * 적중률 panel (메인 기능 정직성 증명), filterable by 1W/1M/3M/YTD, infographic-first.
  */
-export function ScorecardScreen({ loader, initialPeriod = DEFAULT_PERIOD }: ScorecardScreenProps) {
+export function ScorecardScreen({ loader, timingLoader = fetchTimingAccuracy, initialPeriod = DEFAULT_PERIOD }: ScorecardScreenProps) {
   const { status, scorecard, errorMessage, reload } = useScorecard(loader);
   const [period, setPeriod] = useState<ScorecardPeriod>(initialPeriod);
+  const [timing, setTiming] = useState<TimingAccuracy | undefined>(undefined);
+
+  useEffect(() => {
+    let active = true;
+    timingLoader()
+      .then((t) => active && setTiming(t))
+      .catch(() => active && setTiming(undefined));
+    return () => {
+      active = false;
+    };
+  }, [timingLoader]);
+
+  const timingMetrics = timing?.periods.find((p) => p.period === period);
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content} testID="scorecard-screen">
@@ -37,6 +53,9 @@ export function ScorecardScreen({ loader, initialPeriod = DEFAULT_PERIOD }: Scor
       <PeriodFilter periods={FILTER_PERIODS} selected={period} onSelect={setPeriod} />
 
       {renderBody(status, scorecard?.periods.find((p) => p.period === period), errorMessage, reload, scorecard?.benchmarkSymbol ?? "SPY")}
+
+      {/* 타이밍 신호 적중률 — the MAIN feature's honesty proof (§5.6). Shown when loaded. */}
+      {timing ? <TimingAccuracyPanel metrics={timingMetrics} criterion={timing.criterion} /> : null}
     </ScrollView>
   );
 }

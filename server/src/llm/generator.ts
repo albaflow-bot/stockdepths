@@ -39,11 +39,21 @@ export interface GeneratedPicks extends PicksResult {
 
 export type PicksGenerator = (input: GeneratePicksInput) => Promise<GeneratedPicks>;
 
+/** Explicit provider preference, overriding the load-based default. */
+export type PrimaryProvider = "anthropic" | "gemini";
+
 export interface GeneratorOptions {
   /** Current server load 0..1 (e.g. queue depth / capacity). Default 0. */
   load?: number;
   /** Load at/above which Gemini is preferred to shed cost. Default 0.8. */
   loadThreshold?: number;
+  /**
+   * Force a primary provider regardless of load. Set to "gemini" to run on the
+   * free tier (one call/day stays well within Gemini's free quota); the other
+   * provider, if configured, still acts as a failover. When unset, the
+   * load-based policy applies (Anthropic-first below threshold).
+   */
+  primary?: PrimaryProvider;
   maxTokens?: number;
   /** Override the provider set (tests inject stubs). */
   providers?: LlmProvider[];
@@ -51,20 +61,29 @@ export interface GeneratorOptions {
 
 /**
  * Order providers for this run. Pure + exported so the selection policy is
- * directly testable. Only the available providers are returned.
+ * directly testable. Only the available providers are returned. An explicit
+ * `primary` wins over the load-based default; the non-primary provider is kept as
+ * a failover.
  */
 export function orderProviders(
   providers: LlmProvider[],
   load: number,
   loadThreshold: number,
+  primary?: PrimaryProvider,
 ): LlmProvider[] {
   const available = providers.filter((p) => p.isAvailable());
   const byName = (n: string) => available.filter((p) => p.name === n);
   const anthropic = byName("anthropic");
   const gemini = byName("gemini");
   const rest = available.filter((p) => p.name !== "anthropic" && p.name !== "gemini");
-  const primaryFirst =
-    load >= loadThreshold ? [...gemini, ...anthropic] : [...anthropic, ...gemini];
+  let primaryFirst: LlmProvider[];
+  if (primary === "gemini") {
+    primaryFirst = [...gemini, ...anthropic];
+  } else if (primary === "anthropic") {
+    primaryFirst = [...anthropic, ...gemini];
+  } else {
+    primaryFirst = load >= loadThreshold ? [...gemini, ...anthropic] : [...anthropic, ...gemini];
+  }
   return [...primaryFirst, ...rest];
 }
 
@@ -81,12 +100,13 @@ export function makePicksGenerator(opts: GeneratorOptions = {}): PicksGenerator 
   const providers = opts.providers ?? defaultProviders();
   const load = opts.load ?? 0;
   const loadThreshold = opts.loadThreshold ?? 0.8;
+  const primary = opts.primary;
 
   return async (input) => {
-    const ordered = orderProviders(providers, load, loadThreshold);
+    const ordered = orderProviders(providers, load, loadThreshold, primary);
     if (ordered.length === 0) {
       throw new LlmError(
-        "No LLM provider is configured. Set ANTHROPIC_API_KEY (and optionally GEMINI_API_KEY).",
+        "No LLM provider is configured. Set GEMINI_API_KEY (free) or ANTHROPIC_API_KEY (paid).",
       );
     }
 

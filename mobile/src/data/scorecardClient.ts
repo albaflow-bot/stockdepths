@@ -5,7 +5,7 @@
  */
 
 import { apiBaseUrl } from "./config";
-import type { Scorecard } from "../types/scorecard";
+import type { Scorecard, TimingAccuracy } from "../types/scorecard";
 
 export class ScorecardUnavailableError extends Error {
   constructor(message: string) {
@@ -32,4 +32,23 @@ export const fetchScorecard: ScorecardLoader = async (asOf) => {
     throw new ScorecardUnavailableError(`성적표를 불러오지 못했습니다 (오류 ${res.status}).`);
   }
   return (await res.json()) as Scorecard;
+};
+
+export type TimingAccuracyLoader = (asOf?: string) => Promise<TimingAccuracy | undefined>;
+
+/**
+ * Fetch the timing-signal accuracy (server §5.6). Secondary section — returns
+ * `undefined` on any failure (never throws) so it can't break the main scorecard.
+ */
+export const fetchTimingAccuracy: TimingAccuracyLoader = async (asOf) => {
+  const base = apiBaseUrl();
+  if (!base) return undefined;
+  try {
+    const query = asOf ? `?asOf=${encodeURIComponent(asOf)}` : "";
+    const res = await fetch(`${base}/api/scorecard/timing${query}`);
+    if (!res.ok) return undefined;
+    return (await res.json()) as TimingAccuracy;
+  } catch {
+    return undefined;
+  }
 };

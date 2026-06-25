@@ -5,3 +5,6 @@ dist/
 .env.local
 # Warm market-data cache lives under the repo root, not here:
 # <repoRoot>/.bindesk/cache/
+
+.vercel
+.env*

@@ -60,3 +60,35 @@ export interface Scorecard {
 export function periodLabel(p: ScorecardPeriod): string {
   return p === "ALL" ? "전체" : p;
 }
+
+// ── Timing-signal accuracy (SPEC §5.6) — client mirror of server TimingAccuracy ──
+
+/** Hit stats for one signal direction within a period. */
+export interface TimingHitStats {
+  total: number;
+  evaluated: number;
+  hits: number;
+  /** hits / evaluated, in % — null when evaluated === 0. */
+  hitRatePct: number | null;
+}
+
+export interface TimingAccuracyMetrics {
+  period: ScorecardPeriod;
+  periodStart: string;
+  asOf: string;
+  horizonDays: number;
+  buy: TimingHitStats;
+  sell: TimingHitStats;
+  overall: TimingHitStats;
+  /** True when too few signals were evaluable to trust the rate (과장 방지). */
+  lowSample: boolean;
+}
+
+export interface TimingAccuracy {
+  asOf: string;
+  horizonDays: number;
+  minSample: number;
+  /** Explicit hit criterion, surfaced for transparency. */
+  criterion: string;
+  periods: TimingAccuracyMetrics[];
+}
