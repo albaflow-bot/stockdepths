@@ -57,6 +57,8 @@ async function main(): Promise<void> {
       if (!code) continue;
       const last = numFrom(r.lastsale);
       const volume = numFrom(r.volume);
+      // PREOPEN/미체결(거래량 0/null)이면 빈 세션 행으로 직전 정상 EOD 를 덮지 않도록 건너뜀.
+      if (volume == null || volume <= 0) continue;
       const key = `${market}:${code}`;
       if (byKey.has(key)) continue; // 거래소 우선순위(앞선 매핑 우선)
       byKey.set(key, {

@@ -92,6 +92,13 @@ async function ingestMarket(market: ExchangeMarket): Promise<MarketResult> {
         is_etf: s.stockEndType === "etf",
         delisted: false,
       });
+      // 거래대금(백만원 단위 → KRW). PREOPEN/장중 미체결이면 null → 그 빈 세션 행으로
+      // 직전 정상 EOD 를 덮어쓰지 않도록 daily_screen 적재를 건너뛴다(마스터는 갱신).
+      const turnoverKrw = (() => {
+        const v = num(s.accumulatedTradingValue);
+        return v == null ? null : v * 1_000_000;
+      })();
+      if (turnoverKrw == null || turnoverKrw <= 0) continue;
       screen.push({
         market,
         code,
@@ -99,11 +106,7 @@ async function ingestMarket(market: ExchangeMarket): Promise<MarketResult> {
         last: num(s.closePrice),
         change_pct: signedPct(s),
         volume: num(s.accumulatedTradingVolume),
-        // 거래대금: 네이버는 백만원 단위 → KRW 로 환산.
-        turnover: (() => {
-          const v = num(s.accumulatedTradingValue);
-          return v == null ? null : v * 1_000_000;
-        })(),
+        turnover: turnoverKrw,
         rvol: null,
         high_52w: null,
         low_52w: null,
