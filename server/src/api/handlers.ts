@@ -113,7 +113,10 @@ export async function handlePicksToday(
 ): Promise<ApiResponse> {
   const market = (query["market"]?.toUpperCase() as Market) || "US";
   const date = /^\d{4}-\d{2}-\d{2}$/.test(query["date"] ?? "") ? query["date"]! : deps.today();
-  const artifact = deps.artifactStore.get(market, date);
+  // 오늘자 추천이 아직 없으면(주말·UTC/KST 시차·배치 지연) 404 대신 직전 추천으로 폴백.
+  // 명시적 date 질의는 그 날짜만(과거 조회 의미 보존), 무지정(오늘)일 때만 최신 폴백.
+  const explicitDate = /^\d{4}-\d{2}-\d{2}$/.test(query["date"] ?? "");
+  const artifact = deps.artifactStore.get(market, date) ?? (explicitDate ? undefined : deps.artifactStore.getLatest(market));
   if (!artifact) {
     return { status: 404, body: { error: `no picks for ${market} ${date}` } };
   }

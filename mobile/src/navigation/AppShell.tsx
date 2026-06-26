@@ -74,7 +74,7 @@ export function AppShell({ persona, onPersonaChange }: AppShellProps) {
   // 하단 바에 노출되는 1급 탭 5개 + (렌더 대상에만 포함되는) 보조 화면.
   const tabs = useMemo<Tab[]>(
     () => [
-      { key: "home", label: "투데이", render: () => <DiscoveryScreen /> },
+      { key: "home", label: "투데이", render: () => <DiscoveryScreen persona={persona} /> },
       { key: "search", label: "검색", render: () => <SecuritySearchScreen /> },
       { key: "portfolio", label: "내 종목", render: () => <WatchlistTab persona={persona} /> },
       { key: "scorecard", label: "성적표", render: () => <ScorecardScreen /> },

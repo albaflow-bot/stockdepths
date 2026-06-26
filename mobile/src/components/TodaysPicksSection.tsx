@@ -17,6 +17,8 @@ import { Badge } from "./Badge";
 import { badgeLabel, confidenceTone, riskTone } from "../formatters";
 import { fetchTodaysPicks } from "../data/picksClient";
 import { useTodaysPicks, type ArtifactLoader } from "../screens/useTodaysPicks";
+import { pickMatchesPersona } from "../persona/matching";
+import type { PersonaConfig } from "../persona/types";
 import type { DiscoveryMarket } from "../data/discoveryClient";
 import type { DailyPicksArtifact, Pick } from "../types/picks";
 
@@ -34,6 +36,8 @@ export interface TodaysPicksSectionProps {
   onAddWatch: (symbol: string) => void;
   /** 이미 관심목록에 담긴 코드(대문자). */
   watchedCodes: Set<string>;
+  /** 활성 성향 — 있으면 각 픽에 적합/주의 배지를 달고 적합 종목을 위로 정렬(리스트는 유지). */
+  personaConfig?: PersonaConfig;
   testID?: string;
 }
 
@@ -42,6 +46,7 @@ export function TodaysPicksSection({
   loader,
   onAddWatch,
   watchedCodes,
+  personaConfig,
   testID = "todays-picks-section",
 }: TodaysPicksSectionProps) {
   // market 이 바뀌면 로더 identity 가 바뀌어 useTodaysPicks 가 해당 시장으로 재조회한다.
@@ -51,6 +56,17 @@ export function TodaysPicksSection({
     return () => load(market);
   }, [loader, market]);
   const { status, artifact, errorMessage } = useTodaysPicks(effectiveLoader);
+
+  // 성향 적합(리스크 부합) 종목을 위로 — 안정적 정렬이라 같은 그룹 내 원래 순서 유지.
+  // 종목을 빼지 않고(전부 보여달라 정합) 순서·배지만 성향에 맞춘다.
+  const picks = useMemo<Pick[]>(() => {
+    const list = artifact?.picks ?? [];
+    if (!personaConfig) return list;
+    return list
+      .map((pick, i) => ({ pick, i, fit: pickMatchesPersona(pick.risk, personaConfig) }))
+      .sort((a, b) => Number(b.fit) - Number(a.fit) || a.i - b.i)
+      .map((x) => x.pick);
+  }, [artifact, personaConfig]);
 
   return (
     <View style={styles.section} testID={testID}>
@@ -78,11 +94,12 @@ export function TodaysPicksSection({
 
       {status === "ready" && artifact ? (
         <View testID={`${testID}-list`}>
-          {artifact.picks.map((pick) => (
+          {picks.map((pick) => (
             <PickWatchCard
               key={pick.symbol}
               pick={pick}
               watched={watchedCodes.has(pick.symbol.toUpperCase())}
+              personaMatch={personaConfig ? pickMatchesPersona(pick.risk, personaConfig) : undefined}
               onAddWatch={onAddWatch}
               testID={`${testID}-card-${pick.symbol.toUpperCase()}`}
             />
@@ -100,11 +117,14 @@ export function TodaysPicksSection({
 function PickWatchCard({
   pick,
   watched,
+  personaMatch,
   onAddWatch,
   testID,
 }: {
   pick: Pick;
   watched: boolean;
+  /** 성향 적합 여부(있으면 적합/주의 배지). undefined 면 성향 미설정 → 배지 숨김. */
+  personaMatch?: boolean;
   onAddWatch: (symbol: string) => void;
   testID: string;
 }) {
@@ -117,6 +137,13 @@ function PickWatchCard({
       </View>
 
       <View style={styles.badges}>
+        {personaMatch !== undefined ? (
+          <Badge
+            text={personaMatch ? "성향 적합" : "성향 주의"}
+            tone={personaMatch ? "positive" : "warning"}
+            testID={`${testID}-persona`}
+          />
+        ) : null}
         <Badge text={`신뢰도 ${badgeLabel(pick.confidence)}`} tone={confidenceTone(pick.confidence)} testID={`${testID}-confidence`} />
         <Badge text={`리스크 ${badgeLabel(pick.risk)}`} tone={riskTone(pick.risk)} testID={`${testID}-risk`} />
       </View>

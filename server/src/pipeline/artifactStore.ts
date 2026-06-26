@@ -108,6 +108,23 @@ export class ArtifactStore {
     // disk backend: nothing to preload
   }
 
+  /**
+   * 가장 최근(date 최대) 아티팩트 — 오늘자 배치가 아직 없을 때(주말·시차·배치 지연)
+   * 404 대신 직전 추천을 내보내는 폴백용. 디스크 백엔드는 메모리에 적재된 분만 본다.
+   */
+  getLatest(market: Market): DailyPicksArtifact | undefined {
+    let best: DailyPicksArtifact | undefined;
+    for (const a of this.mem.values()) {
+      if (a.market === market && (!best || a.date > best.date)) best = a;
+    }
+    return best;
+  }
+
+  /** async 백엔드에서 최신 행을 메모리로 적재(디스크 no-op; Supabase 가 override). */
+  async hydrateLatest(_market?: Market): Promise<void> {
+    // disk backend: nothing to preload
+  }
+
   /** Await any pending async persistence (no-op for disk; Supabase awaits writes). */
   async flush(): Promise<void> {
     // disk backend: writes are synchronous

@@ -66,6 +66,27 @@ export class SupabaseArtifactStore extends ArtifactStore {
     }
   }
 
+  override getLatest(market: Market): DailyPicksArtifact | undefined {
+    let best: DailyPicksArtifact | undefined;
+    for (const a of this.rows.values()) {
+      if (a.market === market && (!best || a.date > best.date)) best = a;
+    }
+    return best;
+  }
+
+  /** 시장의 최신 추천 한 행(date desc)을 메모리로 적재 — 오늘자 부재 시 폴백 소스. */
+  override async hydrateLatest(market?: Market): Promise<void> {
+    if (!market) return;
+    const q = `select=data&market=eq.${encodeURIComponent(market)}&order=date.desc&limit=1`;
+    try {
+      const found = await selectRows<ArtifactRow>(this.cfg, TABLE, q, this.fetchImpl);
+      const data = found[0]?.data;
+      if (data) this.rows.set(this.cacheKey(market, data.date), data);
+    } catch {
+      // leave empty -> handler still returns a friendly 404 if nothing at all exists
+    }
+  }
+
   override async flush(): Promise<void> {
     const p = this.pending;
     this.pending = [];

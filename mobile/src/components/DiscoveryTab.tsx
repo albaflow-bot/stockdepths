@@ -13,6 +13,7 @@ import { View, Text, Pressable, ScrollView, ActivityIndicator, StyleSheet } from
 import { tokens } from "../theme/tokens";
 import { SecuritySearchCard } from "./SecuritySearchCard";
 import { TodaysPicksSection, type PicksMarketLoader } from "./TodaysPicksSection";
+import type { PersonaConfig } from "../persona/types";
 import { useDiscovery } from "../screens/useDiscovery";
 import type { DiscoveryLoader, DiscoveryMarket } from "../data/discoveryClient";
 import {
@@ -35,6 +36,8 @@ export interface DiscoveryTabProps {
   picksLoader?: PicksMarketLoader;
   /** '오늘의 추천' 픽 ＋관심 — symbol 만 받아 기존 addWatch 경로로 위임. */
   onAddPickWatch?: (symbol: string) => void;
+  /** 활성 성향 — 픽 섹션의 적합/주의 배지·정렬에 사용. */
+  personaConfig?: PersonaConfig;
   testID?: string;
 }
 
@@ -120,6 +123,7 @@ export function DiscoveryTab({
   heldCodes,
   picksLoader,
   onAddPickWatch,
+  personaConfig,
   testID = "discovery-tab",
 }: DiscoveryTabProps) {
   const d = useDiscovery({ loader });
@@ -171,6 +175,7 @@ export function DiscoveryTab({
               loader={picksLoader}
               onAddWatch={onAddPickWatch}
               watchedCodes={watched}
+              personaConfig={personaConfig}
               testID={`${testID}-picks`}
             />
           ) : null}

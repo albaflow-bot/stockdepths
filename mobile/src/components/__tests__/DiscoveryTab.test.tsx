@@ -1,8 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { DiscoveryTab } from "../DiscoveryTab";
+import type { PicksMarketLoader } from "../TodaysPicksSection";
 import type { DiscoveryArtifact, DiscoveryItem } from "../../types/discovery";
 import type { DailyPicksArtifact } from "../../types/picks";
+import type { PersonaConfig } from "../../persona/types";
 
 function picksArtifact(market: "US" | "KR"): DailyPicksArtifact {
   return {
@@ -211,5 +213,39 @@ describe("DiscoveryTab — 오늘의 추천(LLM 픽) 섹션", () => {
     await waitFor(() => expect(screen.getByTestId("discovery-tab-picks-error")).toBeInTheDocument());
     // 픽은 조용히 실패하되, 카테고리 섹션은 정상 렌더.
     expect(screen.getByTestId("discovery-section-gainers")).toBeInTheDocument();
+  });
+
+  it("성향 주입 시 적합/주의 배지 + 적합 종목 우선 정렬", async () => {
+    const twoPicks: PicksMarketLoader = async (m) => ({
+      ...picksArtifact(m),
+      picks: [
+        { symbol: "HIRISK", companyName: "고위험", rationale: "변동성 큼", confidence: "medium", risk: "high" },
+        { symbol: "SAFE", companyName: "안전주", rationale: "추세 견조", confidence: "high", risk: "low" },
+      ],
+    });
+    // 안정형 = low 만 적합. high 는 주의.
+    const persona: PersonaConfig = {
+      mode: "preset",
+      profile: "conservative",
+      targetReturnPct: 10,
+      stopLossPct: 5,
+      setAt: "2026-06-24T00:00:00Z",
+    };
+    render(
+      <DiscoveryTab
+        loader={async () => artifact("US")}
+        picksLoader={twoPicks}
+        personaConfig={persona}
+        onAddPickWatch={() => {}}
+        onAddWatch={() => {}}
+        onAddHolding={() => {}}
+      />,
+    );
+    await waitFor(() => expect(screen.getByTestId("discovery-tab-picks-card-SAFE")).toBeInTheDocument());
+    expect(screen.getByText("성향 적합")).toBeInTheDocument();
+    expect(screen.getByText("성향 주의")).toBeInTheDocument();
+    // 적합(SAFE) 이 주의(HIRISK) 보다 위로 정렬 — 리스트는 둘 다 유지(숨김 ✗).
+    const list = screen.getByTestId("discovery-tab-picks-list").textContent ?? "";
+    expect(list.indexOf("SAFE")).toBeLessThan(list.indexOf("HIRISK"));
   });
 });

@@ -12,6 +12,7 @@ import { HoldingSheet } from "../components/HoldingSheet";
 import { usePortfolio, type UsePortfolioDeps } from "./usePortfolio";
 import type { DiscoveryLoader } from "../data/discoveryClient";
 import type { PicksMarketLoader } from "../components/TodaysPicksSection";
+import type { PersonaConfig } from "../persona/types";
 import type { SecuritySearchItem } from "../types/security";
 
 export interface DiscoveryScreenProps extends UsePortfolioDeps {
@@ -19,6 +20,8 @@ export interface DiscoveryScreenProps extends UsePortfolioDeps {
   discoveryLoader?: DiscoveryLoader;
   /** '오늘의 추천' 픽 로더(테스트 주입). */
   picksLoader?: PicksMarketLoader;
+  /** 활성 성향 — 오늘의 추천 픽의 적합/주의 배지·정렬에 전달. */
+  persona?: PersonaConfig;
   testID?: string;
 }
 
@@ -26,7 +29,7 @@ function codeSet(symbols: string[]): Set<string> {
   return new Set(symbols.map((s) => s.toUpperCase()));
 }
 
-export function DiscoveryScreen({ discoveryLoader, picksLoader, testID = "discovery-screen", ...deps }: DiscoveryScreenProps) {
+export function DiscoveryScreen({ discoveryLoader, picksLoader, persona, testID = "discovery-screen", ...deps }: DiscoveryScreenProps) {
   const pf = usePortfolio(deps);
   const [pending, setPending] = useState<SecuritySearchItem | null>(null);
 
@@ -35,6 +38,7 @@ export function DiscoveryScreen({ discoveryLoader, picksLoader, testID = "discov
       <DiscoveryTab
         loader={discoveryLoader}
         picksLoader={picksLoader}
+        personaConfig={persona}
         watchedCodes={codeSet(pf.portfolio.watchlist.map((w) => w.symbol))}
         heldCodes={codeSet(pf.portfolio.holdings.map((h) => h.symbol))}
         onAddWatch={(item) => {

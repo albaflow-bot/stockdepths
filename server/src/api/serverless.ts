@@ -78,7 +78,12 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   // Hydrate the Supabase-backed stores before the synchronous handlers read them.
   const market = (query["market"]?.toUpperCase() as Market) || "US";
   const date = /^\d{4}-\d{2}-\d{2}$/.test(query["date"] ?? "") ? query["date"]! : deps.today();
-  await Promise.all([artifactStore.hydrate(market, date), trackStore.hydrate()]);
+  // 오늘자 + 최신(폴백) 둘 다 적재 — 오늘자 배치 부재 시 handlePicksToday 가 최신으로 폴백.
+  await Promise.all([
+    artifactStore.hydrate(market, date),
+    artifactStore.hydrateLatest(market),
+    trackStore.hydrate(),
+  ]);
 
   try {
     if (req.method === "POST") {
