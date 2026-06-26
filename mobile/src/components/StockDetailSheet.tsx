@@ -29,6 +29,8 @@ export interface StockDetailTarget {
   last?: number | null;
   changePct?: number | null;
   signal?: { label: string; reason: string } | null;
+  /** 카드에서 2줄로 잘린 전체 설명(픽 rationale·action 등) — 모달에선 전문(줄임 ✗) 표시. */
+  description?: string | null;
 }
 
 export interface StockDetailSheetProps {
@@ -215,6 +217,14 @@ export function StockDetailSheet({
               </View>
             ) : null}
 
+            {/* 전체 설명 — 카드에서 잘린 rationale 등을 줄임 없이 전부 노출 */}
+            {target.description?.trim() ? (
+              <View style={styles.descBlock} testID={`${testID}-description`}>
+                <Text style={styles.descTitle}>설명</Text>
+                <Text style={styles.descText}>{target.description.trim()}</Text>
+              </View>
+            ) : null}
+
             {/* ＋관심 / ＋보유 */}
             <View style={styles.actions}>
               <Pressable
@@ -314,6 +324,14 @@ const styles = StyleSheet.create({
   signal: { flexDirection: "row", alignItems: "baseline", gap: tokens.space.xs, flexWrap: "wrap" },
   signalLabel: { fontSize: tokens.font.size.sm, fontWeight: tokens.font.weight.bold, color: tokens.color.primary },
   signalReason: { fontSize: tokens.font.size.sm, color: tokens.color.textSecondary, flexShrink: 1 },
+  descBlock: {
+    backgroundColor: tokens.color.surfaceAlt,
+    borderRadius: tokens.radius.md,
+    padding: tokens.space.md,
+    gap: tokens.space.xs,
+  },
+  descTitle: { fontSize: tokens.font.size.xs, color: tokens.color.textMuted, fontWeight: tokens.font.weight.medium },
+  descText: { fontSize: tokens.font.size.sm, color: tokens.color.textPrimary, lineHeight: 21 },
 
   actions: { flexDirection: "row", gap: tokens.space.sm },
   btn: { flex: 1, paddingVertical: tokens.space.sm, borderRadius: tokens.radius.pill, alignItems: "center", borderWidth: 1.5 },

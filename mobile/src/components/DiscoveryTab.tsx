@@ -204,6 +204,10 @@ export function DiscoveryTab({
                     market: d.market, // 픽 아티팩트 market(US/KR)
                     name: pick.companyName ?? pick.symbol,
                     signal: null,
+                    // 카드에서 2줄로 잘리는 rationale(+action)을 모달에선 전문으로.
+                    description: [pick.rationale, pick.action ? `→ ${pick.action}` : null]
+                      .filter(Boolean)
+                      .join("\n"),
                   },
                 })
               }
