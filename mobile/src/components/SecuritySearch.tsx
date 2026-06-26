@@ -23,6 +23,8 @@ export interface SecuritySearchProps {
   onAddWatch: (item: SecuritySearchItem) => void;
   /** ＋보유 — 매수가·수량 입력 시트로 이어짐(상위가 처리). */
   onAddHolding: (item: SecuritySearchItem) => void;
+  /** 카드 본문 탭 — 상세 모달 열기(상위가 처리). 없으면 본문 비탭. */
+  onPressItem?: (item: SecuritySearchItem) => void;
   /** 이미 관심에 담긴 코드 집합(대문자). */
   watchedCodes?: Set<string>;
   /** 이미 보유에 담긴 코드 집합(대문자). */
@@ -79,6 +81,7 @@ export function SecuritySearch({
   loader,
   onAddWatch,
   onAddHolding,
+  onPressItem,
   watchedCodes,
   heldCodes,
   debounceMs,
@@ -149,6 +152,7 @@ export function SecuritySearch({
               held={held.has(item.code.toUpperCase())}
               onAddWatch={onAddWatch}
               onAddHolding={onAddHolding}
+              onPress={onPressItem}
             />
           ))}
         </ScrollView>

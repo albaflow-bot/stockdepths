@@ -9,9 +9,11 @@
  * 대금집중에 노출된 초대형주에는 "이례신호 초대형주" 배지를 단다(SPEC §1-Δ 강제 규칙).
  */
 
+import { useState } from "react";
 import { View, Text, Pressable, ScrollView, ActivityIndicator, StyleSheet } from "react-native";
 import { tokens } from "../theme/tokens";
 import { SecuritySearchCard } from "./SecuritySearchCard";
+import { StockDetailSheet, type StockDetailTarget } from "./StockDetailSheet";
 import { TodaysPicksSection, type PicksMarketLoader } from "./TodaysPicksSection";
 import type { PersonaConfig } from "../persona/types";
 import { useDiscovery } from "../screens/useDiscovery";
@@ -75,6 +77,7 @@ function CategorySection({
   market,
   onAddWatch,
   onAddHolding,
+  onPressItem,
   watched,
   held,
 }: {
@@ -83,6 +86,7 @@ function CategorySection({
   market: DiscoveryArtifact["market"];
   onAddWatch: (item: SecuritySearchItem) => void;
   onAddHolding: (item: SecuritySearchItem) => void;
+  onPressItem: (item: SecuritySearchItem) => void;
   watched: Set<string>;
   held: Set<string>;
 }) {
@@ -106,6 +110,7 @@ function CategorySection({
             held={held.has(d.code.toUpperCase())}
             onAddWatch={onAddWatch}
             onAddHolding={onAddHolding}
+            onPress={onPressItem}
             badgeText={d.unusual ? "이례신호 초대형주" : undefined}
             testID={`discovery-card-${category}-${d.code}`}
           />
@@ -129,6 +134,23 @@ export function DiscoveryTab({
   const d = useDiscovery({ loader });
   const watched = watchedCodes ?? new Set<string>();
   const held = heldCodes ?? new Set<string>();
+  // 상세 모달 대상. 발굴 카드는 원본 SecuritySearchItem 을 보존해 ＋관심/＋보유가 기존
+  // 경로(full item)를 그대로 호출하게 한다. 픽 카드는 item 없이 target 만 채운다.
+  const [detail, setDetail] = useState<{ item: SecuritySearchItem | null; target: StockDetailTarget } | null>(null);
+
+  // 발굴 카드(검색형) 탭 → 상세. last/change/신호를 그대로 넘긴다.
+  const openItem = (item: SecuritySearchItem) =>
+    setDetail({
+      item,
+      target: {
+        symbol: item.code,
+        market: item.market,
+        name: item.name_ko?.trim() || item.name_en?.trim() || item.code,
+        last: item.last,
+        changePct: item.change_pct,
+        signal: item.signal,
+      },
+    });
 
   return (
     <View style={styles.container} testID={testID}>
@@ -174,6 +196,17 @@ export function DiscoveryTab({
               market={d.market}
               loader={picksLoader}
               onAddWatch={onAddPickWatch}
+              onPressPick={(pick) =>
+                setDetail({
+                  item: null, // 픽은 last/change 없음 → 상세가 stats.close 로 헤더를 채운다.
+                  target: {
+                    symbol: pick.symbol,
+                    market: d.market, // 픽 아티팩트 market(US/KR)
+                    name: pick.companyName ?? pick.symbol,
+                    signal: null,
+                  },
+                })
+              }
               watchedCodes={watched}
               personaConfig={personaConfig}
               testID={`${testID}-picks`}
@@ -199,12 +232,33 @@ export function DiscoveryTab({
               market={d.artifact!.market}
               onAddWatch={onAddWatch}
               onAddHolding={onAddHolding}
+              onPressItem={openItem}
               watched={watched}
               held={held}
             />
           ))}
         </ScrollView>
       ) : null}
+
+      {/* 카드/픽 탭 → 종목 상세 모달 */}
+      <StockDetailSheet
+        visible={detail != null}
+        target={detail?.target ?? null}
+        watched={detail ? watched.has(detail.target.symbol.toUpperCase()) : false}
+        held={detail ? held.has(detail.target.symbol.toUpperCase()) : false}
+        onAddWatch={() => {
+          if (!detail) return;
+          // 발굴 카드는 원본 item 으로, 픽은 symbol 만 있는 폴백 경로로 위임.
+          if (detail.item) onAddWatch(detail.item);
+          else if (onAddPickWatch) onAddPickWatch(detail.target.symbol);
+        }}
+        onAddHolding={() => {
+          if (detail?.item) onAddHolding(detail.item);
+          // 픽은 매수가 없는 후보라 ＋보유 경로가 없다(검색·발굴 카드만 보유 추가).
+        }}
+        onClose={() => setDetail(null)}
+        testID={`${testID}-detail`}
+      />
     </View>
   );
 }

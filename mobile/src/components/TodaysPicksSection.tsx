@@ -34,6 +34,8 @@ export interface TodaysPicksSectionProps {
   loader?: PicksMarketLoader;
   /** ＋관심 — 해당 픽 symbol 을 관심목록에 추가(기존 addWatch 경로 재사용). */
   onAddWatch: (symbol: string) => void;
+  /** 픽 카드 본문 탭 — 상세 모달 열기(상위가 처리). 없으면 본문 비탭. */
+  onPressPick?: (pick: Pick) => void;
   /** 이미 관심목록에 담긴 코드(대문자). */
   watchedCodes: Set<string>;
   /** 활성 성향 — 있으면 각 픽에 적합/주의 배지를 달고 적합 종목을 위로 정렬(리스트는 유지). */
@@ -45,6 +47,7 @@ export function TodaysPicksSection({
   market,
   loader,
   onAddWatch,
+  onPressPick,
   watchedCodes,
   personaConfig,
   testID = "todays-picks-section",
@@ -101,6 +104,7 @@ export function TodaysPicksSection({
               watched={watchedCodes.has(pick.symbol.toUpperCase())}
               personaMatch={personaConfig ? pickMatchesPersona(pick.risk, personaConfig) : undefined}
               onAddWatch={onAddWatch}
+              onPress={onPressPick}
               testID={`${testID}-card-${pick.symbol.toUpperCase()}`}
             />
           ))}
@@ -119,6 +123,7 @@ function PickWatchCard({
   watched,
   personaMatch,
   onAddWatch,
+  onPress,
   testID,
 }: {
   pick: Pick;
@@ -126,11 +131,15 @@ function PickWatchCard({
   /** 성향 적합 여부(있으면 적합/주의 배지). undefined 면 성향 미설정 → 배지 숨김. */
   personaMatch?: boolean;
   onAddWatch: (symbol: string) => void;
+  /** 카드 본문 탭 — 상세 모달 열기. 없으면 본문 비탭. */
+  onPress?: (pick: Pick) => void;
   testID: string;
 }) {
   const sym = pick.symbol.toUpperCase();
-  return (
-    <View style={styles.card} testID={testID}>
+
+  // 본문(헤더~action)만 탭 영역. ＋관심 버튼은 바깥에 둬서 전파 없이 기존 동작 유지.
+  const body = (
+    <>
       <View style={styles.headerRow}>
         {pick.companyName ? <Text style={styles.company} numberOfLines={1}>{pick.companyName}</Text> : null}
         <Text style={styles.symbol}>{sym}</Text>
@@ -150,6 +159,24 @@ function PickWatchCard({
 
       <Text style={styles.rationale} numberOfLines={2}>{pick.rationale}</Text>
       {pick.action ? <Text style={styles.action}>→ {pick.action}</Text> : null}
+    </>
+  );
+
+  return (
+    <View style={styles.card} testID={testID}>
+      {onPress ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${pick.companyName ?? sym} 상세 보기`}
+          onPress={() => onPress(pick)}
+          style={styles.bodyTap}
+          testID={`${testID}-body`}
+        >
+          {body}
+        </Pressable>
+      ) : (
+        <View style={styles.bodyTap}>{body}</View>
+      )}
 
       <Pressable
         accessibilityRole="button"
@@ -192,6 +219,7 @@ const styles = StyleSheet.create({
     marginBottom: tokens.space.sm,
     gap: tokens.space.sm,
   },
+  bodyTap: { gap: tokens.space.sm },
   headerRow: { flexDirection: "row", alignItems: "baseline", gap: tokens.space.xs, flexWrap: "wrap" },
   company: { fontSize: tokens.font.size.md, fontWeight: tokens.font.weight.bold, color: tokens.color.textPrimary, flexShrink: 1 },
   symbol: { fontSize: tokens.font.size.sm, fontWeight: tokens.font.weight.medium, color: tokens.color.textSecondary },

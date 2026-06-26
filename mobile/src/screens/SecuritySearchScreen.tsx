@@ -10,9 +10,10 @@ import { View, StyleSheet } from "react-native";
 import { tokens } from "../theme/tokens";
 import { SecuritySearch } from "../components/SecuritySearch";
 import { HoldingSheet } from "../components/HoldingSheet";
+import { StockDetailSheet } from "../components/StockDetailSheet";
 import { usePortfolio, type UsePortfolioDeps } from "./usePortfolio";
 import type { SecuritySearchLoader } from "../data/securitySearchClient";
-import { type SecuritySearchItem } from "../types/security";
+import { displayName, type SecuritySearchItem } from "../types/security";
 
 export interface SecuritySearchScreenProps extends UsePortfolioDeps {
   /** 검색 로더(테스트 주입). */
@@ -28,6 +29,7 @@ function codeSet(symbols: string[]): Set<string> {
 export function SecuritySearchScreen({ searchLoader, testID = "security-search-screen", ...deps }: SecuritySearchScreenProps) {
   const pf = usePortfolio(deps);
   const [pending, setPending] = useState<SecuritySearchItem | null>(null);
+  const [detail, setDetail] = useState<SecuritySearchItem | null>(null);
 
   const watchedCodes = codeSet(pf.portfolio.watchlist.map((w) => w.symbol));
   const heldCodes = codeSet(pf.portfolio.holdings.map((h) => h.symbol));
@@ -42,6 +44,7 @@ export function SecuritySearchScreen({ searchLoader, testID = "security-search-s
           void pf.addWatch(item.code); // 원터치 — 실패해도 화면 막지 않음(담김 ✓는 상태로 반영)
         }}
         onAddHolding={(item) => setPending(item)}
+        onPressItem={(item) => setDetail(item)}
       />
 
       {/* ＋보유 → 매수가·수량 입력 시트 (검색에서 고른 종목은 잠금) */}
@@ -54,6 +57,32 @@ export function SecuritySearchScreen({ searchLoader, testID = "security-search-s
           return err;
         }}
         testID={`${testID}-sheet`}
+      />
+
+      {/* 카드 본문 탭 → 종목 상세 모달 */}
+      <StockDetailSheet
+        visible={detail != null}
+        target={
+          detail
+            ? {
+                symbol: detail.code,
+                market: detail.market,
+                name: displayName(detail),
+                last: detail.last,
+                changePct: detail.change_pct,
+                signal: detail.signal,
+              }
+            : null
+        }
+        watched={detail ? watchedCodes.has(detail.code.toUpperCase()) : false}
+        held={detail ? heldCodes.has(detail.code.toUpperCase()) : false}
+        onAddWatch={(symbol) => void pf.addWatch(symbol)}
+        onAddHolding={(symbol) => {
+          if (detail) setPending(detail);
+          setDetail(null);
+        }}
+        onClose={() => setDetail(null)}
+        testID={`${testID}-detail`}
       />
     </View>
   );

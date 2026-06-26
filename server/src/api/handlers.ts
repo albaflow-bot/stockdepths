@@ -8,7 +8,7 @@
  * JSON body) so they're testable without opening a socket.
  */
 
-import { getMarketRegistry } from "../market/index.js";
+import { getMarketRegistry, KrMarketAdapter } from "../market/index.js";
 import type { Market, MarketSourceAdapter, Quote } from "../market/types.js";
 import { ArtifactStore } from "../pipeline/artifactStore.js";
 import { ScorecardService } from "../track/scorecard.js";
@@ -157,6 +157,71 @@ export async function handleQuotes(
   return { status: 200, body: results.filter((q): q is ReturnType<typeof toClientQuote> => q != null) };
 }
 
+/** 기간별 일봉 lookback: 거래일 슬라이스 길이 + fetch 연수. */
+const HISTORY_RANGE_DAYS: Record<string, number> = { "5D": 5, "1M": 22, "3M": 66, "1Y": 252, "5Y": 1300 };
+const HISTORY_RANGE_YEARS: Record<string, number> = { "5D": 1, "1M": 1, "3M": 1, "1Y": 1, "5Y": 5 };
+
+/** 시장별 어댑터 해결(KR 은 필요 시 등록). 종목 상세 차트/스탯 전용. */
+function resolveHistoryAdapter(market: Market): MarketSourceAdapter {
+  const registry = getMarketRegistry();
+  if (market === "KR" && !registry.get("KR")) registry.register(new KrMarketAdapter());
+  return registry.require(market);
+}
+
+/**
+ * GET /api/history?symbol=AAPL&market=US&range=1M — 종목 상세용 일봉 시계열 + 스탯.
+ * 무료 데이터는 일봉까지(인트라데이 ✗ — SPEC §5.7). range: 5D|1M|3M|1Y|5Y.
+ */
+export async function handleHistory(
+  query: Record<string, string>,
+  _deps: ApiDeps,
+): Promise<ApiResponse> {
+  const symbol = (query["symbol"] ?? "").trim().toUpperCase();
+  if (!symbol) return { status: 400, body: { error: "symbol query parameter is required" } };
+  const market: Market = (query["market"]?.toUpperCase() as Market) === "KR" ? "KR" : "US";
+  const range = (query["range"] ?? "1M").toUpperCase();
+  const days = HISTORY_RANGE_DAYS[range] ?? 22;
+  const years = HISTORY_RANGE_YEARS[range] ?? 1;
+
+  let candles;
+  try {
+    const series = await resolveHistoryAdapter(market).getHistory(symbol, { years });
+    candles = series.candles;
+  } catch {
+    return { status: 502, body: { error: `history unavailable for ${symbol}` } };
+  }
+  if (!candles || candles.length === 0) {
+    return { status: 404, body: { error: `no history for ${symbol}` } };
+  }
+
+  const last = candles[candles.length - 1]!;
+  const prev = candles[candles.length - 2] ?? last;
+  const yearWin = candles.slice(-252); // 52주 고저
+  const high52 = Math.max(...yearWin.map((c) => c.high));
+  const low52 = Math.min(...yearWin.map((c) => c.low));
+
+  return {
+    status: 200,
+    body: {
+      symbol,
+      market,
+      range,
+      points: candles.slice(-days).map((c) => ({ date: c.date, close: c.close })),
+      stats: {
+        open: last.open,
+        high: last.high,
+        low: last.low,
+        close: last.close,
+        volume: last.volume,
+        prevClose: prev.close,
+        high52,
+        low52,
+        asOf: last.date,
+      },
+    },
+  };
+}
+
 /** GET /api/scorecard?asOf=YYYY-MM-DD */
 export async function handleScorecard(
   query: Record<string, string>,
@@ -232,6 +297,7 @@ export async function route(
   if (pathname === "/api/search") return handleSearch(query, deps);
   if (pathname === "/api/discover") return handleDiscover(query, deps);
   if (pathname === "/api/quotes") return handleQuotes(query, deps);
+  if (pathname === "/api/history") return handleHistory(query, deps);
   if (pathname === "/api/scorecard/timing") return handleTimingAccuracy(query, deps);
   if (pathname === "/api/scorecard") return handleScorecard(query, deps);
   if (pathname === "/api/health" || pathname === "/") return { status: 200, body: { ok: true } };

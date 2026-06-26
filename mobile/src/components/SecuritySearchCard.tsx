@@ -29,6 +29,8 @@ export interface SecuritySearchCardProps {
   held: boolean;
   onAddWatch: (item: SecuritySearchItem) => void;
   onAddHolding: (item: SecuritySearchItem) => void;
+  /** 카드 본문(＋관심/＋보유 버튼 제외) 탭 — 상세 모달 열기. 없으면 본문 비탭. */
+  onPress?: (item: SecuritySearchItem) => void;
   /** 카드 상단 작은 배지(예: "이례신호 초대형주"). 없으면 미표시. */
   badgeText?: string;
   testID?: string;
@@ -49,6 +51,7 @@ export function SecuritySearchCard({
   held,
   onAddWatch,
   onAddHolding,
+  onPress,
   badgeText,
   testID,
 }: SecuritySearchCardProps) {
@@ -57,14 +60,10 @@ export function SecuritySearchCard({
   const arrow = changeArrow(item.direction);
   const hasSignal = !!item.signal && !!item.signal.label?.trim() && !!item.signal.reason?.trim();
 
-  return (
-    <View style={styles.card} testID={tid}>
-      {badgeText ? (
-        <View style={styles.badge} testID={`${tid}-badge`}>
-          <Text style={styles.badgeText}>⚡ {badgeText}</Text>
-        </View>
-      ) : null}
-
+  // 본문(헤더~신호)만 탭 영역으로 감싼다. ＋관심/＋보유 버튼은 바깥에 둬서
+  // 이벤트 전파 없이 기존 동작을 유지한다(무회귀).
+  const body = (
+    <>
       {/* 종목명 · 코드 · 시장 */}
       <View style={styles.headerRow}>
         <Text style={styles.name} numberOfLines={1}>
@@ -92,6 +91,30 @@ export function SecuritySearchCard({
           <Text style={styles.signalReason}>· {item.signal!.reason}</Text>
         </View>
       ) : null}
+    </>
+  );
+
+  return (
+    <View style={styles.card} testID={tid}>
+      {badgeText ? (
+        <View style={styles.badge} testID={`${tid}-badge`}>
+          <Text style={styles.badgeText}>⚡ {badgeText}</Text>
+        </View>
+      ) : null}
+
+      {onPress ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${displayName(item)} 상세 보기`}
+          onPress={() => onPress(item)}
+          style={styles.bodyTap}
+          testID={`${tid}-body`}
+        >
+          {body}
+        </Pressable>
+      ) : (
+        <View style={styles.bodyTap}>{body}</View>
+      )}
 
       {/* ＋관심 / ＋보유 */}
       <View style={styles.actions}>
@@ -142,6 +165,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.space.sm,
   },
   badgeText: { fontSize: tokens.font.size.xs, fontWeight: tokens.font.weight.bold, color: tokens.color.warningFg },
+  bodyTap: { gap: tokens.space.sm },
   headerRow: { flexDirection: "row", alignItems: "baseline", gap: tokens.space.xs, flexWrap: "wrap" },
   name: { fontSize: tokens.font.size.md, fontWeight: tokens.font.weight.bold, color: tokens.color.textPrimary, flexShrink: 1 },
   code: { fontSize: tokens.font.size.sm, color: tokens.color.textSecondary, fontWeight: tokens.font.weight.medium },
