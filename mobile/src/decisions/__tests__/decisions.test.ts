@@ -7,11 +7,8 @@ describe("SEED_DECISIONS (mirrors specs/decision-queue.md)", () => {
   it("exposes the three delta decisions with stable ids", () => {
     expect(SEED_DECISIONS.map((d) => d.id)).toEqual(["DQ-1", "DQ-2", "DQ-3"]);
   });
-  it("defaults DQ-2 (실시간 틱) to deferred and the others to open", () => {
-    const byId = Object.fromEntries(SEED_DECISIONS.map((d) => [d.id, d.status]));
-    expect(byId["DQ-1"]).toBe("open");
-    expect(byId["DQ-2"]).toBe("deferred");
-    expect(byId["DQ-3"]).toBe("open");
+  it("defaults all delta decisions to approved (사용자 일괄 승인)", () => {
+    for (const d of SEED_DECISIONS) expect(d.status).toBe("approved");
   });
   it("every item carries a plain-language summary + what's needed", () => {
     for (const d of SEED_DECISIONS) {
@@ -29,15 +26,15 @@ describe("DecisionRepository", () => {
   it("lists the seed items with their default status before any decision", async () => {
     const items = await makeRepo().list();
     expect(items.map((i) => i.id)).toEqual(["DQ-1", "DQ-2", "DQ-3"]);
-    expect(items.find((i) => i.id === "DQ-1")!.status).toBe("open");
+    expect(items.find((i) => i.id === "DQ-1")!.status).toBe("approved");
   });
 
   it("persists a decision as a status overlay and reports the open count", async () => {
     const repo = makeRepo();
-    expect(await repo.openCount()).toBe(2); // DQ-1, DQ-3 open
-    await repo.setStatus("DQ-1", "approved");
-    expect((await repo.list()).find((i) => i.id === "DQ-1")!.status).toBe("approved");
-    expect(await repo.openCount()).toBe(1); // only DQ-3 still open
+    expect(await repo.openCount()).toBe(0); // 시드 전부 approved → 미결정 0
+    await repo.setStatus("DQ-1", "open"); // 다시 미결정으로 표시하면 overlay 반영
+    expect((await repo.list()).find((i) => i.id === "DQ-1")!.status).toBe("open");
+    expect(await repo.openCount()).toBe(1);
   });
 
   it("keeps decisions across fresh repository instances on the same storage", async () => {

@@ -8,7 +8,6 @@ import { ScorecardScreen } from "../screens/ScorecardScreen";
 import { NotificationInboxScreen } from "../screens/NotificationInboxScreen";
 import { LegalScreen } from "../screens/LegalScreen";
 import { PersonaSetupScreen } from "../screens/PersonaSetupScreen";
-import { DecisionQueueScreen } from "../screens/DecisionQueueScreen";
 import type { PersonaConfig } from "../persona/types";
 
 interface Tab {
@@ -19,9 +18,9 @@ interface Tab {
 
 /** 하단 바에 노출되는 1급 탭. 나머지는 '더보기' 허브로. */
 const PRIMARY_KEYS = new Set(["home", "search", "portfolio", "scorecard", "more"]);
-const SECONDARY_KEYS = new Set(["inbox", "persona", "decisions", "legal"]);
+const SECONDARY_KEYS = new Set(["inbox", "persona", "legal"]);
 
-/** '더보기' 허브 — 보조 화면(알림함·내 성향·결정 대기·약관) 목록. 탭하면 해당 화면으로. */
+/** '더보기' 허브 — 보조 화면(알림함·내 성향·약관) 목록. 탭하면 해당 화면으로. */
 function MoreScreen({ items, onOpen }: { items: Tab[]; onOpen: (key: string) => void }) {
   return (
     <View style={styles.moreScreen} testID="more-screen">
@@ -65,7 +64,6 @@ export function AppShell({ persona, onPersonaChange }: AppShellProps) {
         label: "내 성향",
         render: () => <PersonaSetupScreen mode="edit" initial={persona} onSave={onPersonaChange ?? (() => {})} />,
       },
-      { key: "decisions", label: "결정 대기", render: () => <DecisionQueueScreen /> },
       { key: "legal", label: "약관", render: () => <LegalScreen /> },
     ],
     [persona, onPersonaChange],

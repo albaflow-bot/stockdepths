@@ -25,17 +25,17 @@ describe("DecisionQueueScreen", () => {
     expect(screen.getByTestId("decision-DQ-1-action-rejected")).toBeInTheDocument();
   });
 
-  it("records a decision and reflects it in the status badge + open count", async () => {
+  it("records a decision and reflects it in the status badge", async () => {
     render(<DecisionQueueScreen repository={makeRepo()} />);
-    await waitFor(() => expect(screen.getByTestId("decision-open-count")).toHaveTextContent("결정 대기 2건"));
+    // 시드 전부 일괄 승인 → 미결정 0건.
+    await waitFor(() => expect(screen.getByTestId("decision-open-count")).toHaveTextContent("결정 대기 0건"));
 
-    fireEvent.click(screen.getByTestId("decision-DQ-1-action-approved"));
-    await waitFor(() => expect(screen.getByTestId("decision-DQ-1-status")).toHaveTextContent("승인됨"));
-    expect(screen.getByTestId("decision-open-count")).toHaveTextContent("결정 대기 1건");
+    fireEvent.click(screen.getByTestId("decision-DQ-1-action-deferred"));
+    await waitFor(() => expect(screen.getByTestId("decision-DQ-1-status")).toHaveTextContent("보류됨"));
   });
 
-  it("shows DQ-2 (실시간 틱) pre-flagged as 보류됨 (deferred), not silently dropped", async () => {
+  it("seeds all delta decisions as 승인됨 (일괄 승인)", async () => {
     render(<DecisionQueueScreen repository={makeRepo()} />);
-    await waitFor(() => expect(screen.getByTestId("decision-DQ-2-status")).toHaveTextContent("보류됨"));
+    await waitFor(() => expect(screen.getByTestId("decision-DQ-2-status")).toHaveTextContent("승인됨"));
   });
 });

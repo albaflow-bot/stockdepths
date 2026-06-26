@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { tokens, badgeColors } from "../theme/tokens";
 import { PeriodFilter } from "../components/PeriodFilter";
@@ -9,7 +9,7 @@ import { RealizedVsBacktest } from "../components/RealizedVsBacktest";
 import { TimingAccuracyPanel } from "../components/TimingAccuracyPanel";
 import { LoadingView, ErrorView } from "../components/StateViews";
 import { fmtSignedPct, fmtPct, returnTone } from "../formatters";
-import { FILTER_PERIODS, periodLabel, type ScorecardMetrics, type ScorecardPeriod, type TimingAccuracy } from "../types/scorecard";
+import { FILTER_PERIODS, periodLabel, type ScorecardEntry, type ScorecardMetrics, type ScorecardPeriod, type TimingAccuracy } from "../types/scorecard";
 import { useScorecard, type ScorecardStatus } from "./useScorecard";
 import { fetchTimingAccuracy, type ScorecardLoader, type TimingAccuracyLoader } from "../data/scorecardClient";
 
@@ -22,6 +22,33 @@ export interface ScorecardScreenProps {
 }
 
 const DEFAULT_PERIOD: ScorecardPeriod = "1M";
+
+/** 종목별 집계 행 — 같은 종목이 여러 날 추천되면 한 줄로 묶는다. */
+interface SymbolRollup {
+  symbol: string;
+  count: number;
+  avgReturnPct: number | null;
+  avgExcessPct: number | null;
+}
+
+/**
+ * 추천 리스트를 종목별로 묶는다(추천 N회·평균 수익률·평균 초과). 같은 종목이 100일간
+ * 추천돼도 1행으로 — 평균 수익률 desc 정렬. (일자별 raw 행 나열 문제 해소.)
+ */
+function rollupBySymbol(entries: ScorecardEntry[]): SymbolRollup[] {
+  const by = new Map<string, { count: number; rets: number[]; excs: number[] }>();
+  for (const e of entries) {
+    const g = by.get(e.symbol) ?? { count: 0, rets: [], excs: [] };
+    g.count += 1;
+    if (e.returnPct != null) g.rets.push(e.returnPct);
+    if (e.excessReturnPct != null) g.excs.push(e.excessReturnPct);
+    by.set(e.symbol, g);
+  }
+  const mean = (xs: number[]): number | null => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+  return [...by.entries()]
+    .map(([symbol, g]) => ({ symbol, count: g.count, avgReturnPct: mean(g.rets), avgExcessPct: mean(g.excs) }))
+    .sort((a, b) => (b.avgReturnPct ?? -Infinity) - (a.avgReturnPct ?? -Infinity));
+}
 
 /**
  * 성적표 tab — honest performance (SPEC Task 9 + §5.6). Headline = benchmark-relative
@@ -139,33 +166,38 @@ function ScorecardBody({ metrics, benchmarkSymbol }: { metrics: ScorecardMetrics
         </View>
       ) : null}
 
-      {/* 전체 추천 목록 — 최고/최저만이 아니라 무엇을 추천했고 각각 성적이 어떤지 전부 공개. */}
-      {metrics.entries && metrics.entries.length > 0 ? (
-        <View style={styles.entriesWrap} testID="scorecard-entries">
-          <Text style={styles.entriesTitle}>전체 추천 ({metrics.entries.length}건)</Text>
-          <View style={styles.entryHead}>
-            <Text style={[styles.entryHeadText, styles.colSym]}>종목</Text>
-            <Text style={[styles.entryHeadText, styles.colRet]}>수익률</Text>
-            <Text style={[styles.entryHeadText, styles.colExc]}>초과</Text>
+      {/* 전체 추천 — 종목별로 묶어 공개(같은 종목 여러 날 추천 → 1행: 추천 N회·평균 수익률). */}
+      <ScorecardEntries entries={metrics.entries ?? []} />
+    </View>
+  );
+}
+
+/** 전체 추천을 종목별로 묶어 표로 — 추천 N회·평균 수익률·평균 초과(평균수익 desc). */
+function ScorecardEntries({ entries }: { entries: ScorecardEntry[] }) {
+  const rollups = useMemo(() => rollupBySymbol(entries), [entries]);
+  if (rollups.length === 0) return null;
+  return (
+    <View style={styles.entriesWrap} testID="scorecard-entries">
+      <Text style={styles.entriesTitle}>전체 추천 ({rollups.length}종목)</Text>
+      <View style={styles.entryHead}>
+        <Text style={[styles.entryHeadText, styles.colSym]}>종목 (추천횟수)</Text>
+        <Text style={[styles.entryHeadText, styles.colRet]}>평균 수익률</Text>
+        <Text style={[styles.entryHeadText, styles.colExc]}>평균 초과</Text>
+      </View>
+      {rollups.map((r) => (
+        <View key={r.symbol} style={styles.entryRow} testID={`scorecard-entry-${r.symbol}`}>
+          <View style={styles.colSym}>
+            <Text style={styles.entrySymbol}>{r.symbol}</Text>
+            <Text style={styles.entryDate}>추천 {r.count}회</Text>
           </View>
-          {metrics.entries.map((e, i) => (
-            <View key={`${e.symbol}-${e.date}-${i}`} style={styles.entryRow}>
-              <View style={styles.colSym}>
-                <Text style={styles.entrySymbol}>{e.symbol}</Text>
-                <Text style={styles.entryDate}>{e.date}</Text>
-              </View>
-              <Text
-                style={[styles.entryRet, styles.colRet, { color: badgeColors[returnTone(e.returnPct)].fg }]}
-              >
-                {e.returnPct == null ? "평가 전" : fmtSignedPct(e.returnPct)}
-              </Text>
-              <Text style={[styles.entryExc, styles.colExc]}>
-                {e.excessReturnPct == null ? "—" : fmtSignedPct(e.excessReturnPct)}
-              </Text>
-            </View>
-          ))}
+          <Text style={[styles.entryRet, styles.colRet, { color: badgeColors[returnTone(r.avgReturnPct)].fg }]}>
+            {r.avgReturnPct == null ? "평가 전" : fmtSignedPct(r.avgReturnPct)}
+          </Text>
+          <Text style={[styles.entryExc, styles.colExc]}>
+            {r.avgExcessPct == null ? "—" : fmtSignedPct(r.avgExcessPct)}
+          </Text>
         </View>
-      ) : null}
+      ))}
     </View>
   );
 }
