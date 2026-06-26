@@ -26,7 +26,7 @@ describe("PickCard", () => {
     expect(screen.getByTestId("backtest-panel-NVDA")).toBeInTheDocument();
     // Headline excess return is shown (52.5% excess for NVDA).
     expect(screen.getByText("벤치마크 대비 초과수익")).toBeInTheDocument();
-    expect(screen.getByText("+52.5%")).toBeInTheDocument();
+    expect(screen.getByText("+52.50%")).toBeInTheDocument();
 
     // Toggling again collapses it.
     fireEvent.click(screen.getByTestId("backtest-toggle-NVDA"));
@@ -64,7 +64,7 @@ describe("BacktestPanel", () => {
   it("formats negative excess (underperformance) honestly", () => {
     const losing: Pick = SAMPLE_ARTIFACT.picks.find((p) => p.symbol === "MSFT")!;
     render(<BacktestPanel backtest={losing.backtest} />);
-    expect(screen.getByText("-28.6%")).toBeInTheDocument(); // MSFT trailed SPY
+    expect(screen.getByText("-28.60%")).toBeInTheDocument(); // MSFT trailed SPY
   });
 });
 

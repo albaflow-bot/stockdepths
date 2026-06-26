@@ -11,7 +11,7 @@ describe("ScorecardScreen", () => {
     render(<ScorecardScreen loader={loader} />);
     await waitFor(() => expect(screen.getByTestId("scorecard-hero")).toBeInTheDocument());
     // 1M excess = +1.6%
-    expect(screen.getByTestId("hero-excess")).toHaveTextContent("+1.6%");
+    expect(screen.getByTestId("hero-excess")).toHaveTextContent("+1.60%");
     expect(screen.getByText("벤치마크 대비 누적 초과수익")).toBeInTheDocument();
     // Infographic pieces, not a plain text list.
     expect(screen.getByTestId("comparison-bars")).toBeInTheDocument();
@@ -22,8 +22,8 @@ describe("ScorecardScreen", () => {
     render(<ScorecardScreen loader={loader} />);
     await waitFor(() => expect(screen.getByTestId("scorecard-hero")).toBeInTheDocument());
     expect(screen.getByTestId("win-rate-bar")).toHaveTextContent("66.67%");
-    expect(screen.getByTestId("tile-avg")).toHaveTextContent("+3.8%");
-    expect(screen.getByTestId("tile-mdd")).toHaveTextContent("-5.2%");
+    expect(screen.getByTestId("tile-avg")).toHaveTextContent("+3.80%");
+    expect(screen.getByTestId("tile-mdd")).toHaveTextContent("-5.20%");
   });
 
   it("shows realized outcomes alongside the 5Y backtest aggregate", async () => {
@@ -31,8 +31,8 @@ describe("ScorecardScreen", () => {
     await waitFor(() => expect(screen.getByTestId("realized-vs-backtest")).toBeInTheDocument());
     const panel = screen.getByTestId("realized-vs-backtest");
     expect(panel).toHaveTextContent("실제 성과 vs 5년 백테스트");
-    expect(panel).toHaveTextContent("+1.6%"); // realized excess
-    expect(panel).toHaveTextContent("+3.2%"); // backtest excess
+    expect(panel).toHaveTextContent("+1.60%"); // realized excess
+    expect(panel).toHaveTextContent("+3.20%"); // backtest excess
   });
 
   it("filters by period (switch to 3M shows that period's metrics, incl. a negative excess)", async () => {
@@ -41,7 +41,7 @@ describe("ScorecardScreen", () => {
 
     fireEvent.click(screen.getByTestId("period-3M"));
     // 3M honestly trailed the benchmark → -2.5%
-    await waitFor(() => expect(screen.getByTestId("hero-excess")).toHaveTextContent("-2.5%"));
+    await waitFor(() => expect(screen.getByTestId("hero-excess")).toHaveTextContent("-2.50%"));
     expect(screen.getByTestId("win-rate-bar")).toHaveTextContent("53.85%");
   });
 

@@ -30,10 +30,11 @@ describe("confidenceTone / riskTone", () => {
 });
 
 describe("percent formatting", () => {
-  it("fmtSignedPct adds a sign and handles null", () => {
-    expect(fmtSignedPct(12.3)).toBe("+12.3%");
-    expect(fmtSignedPct(-4.5)).toBe("-4.5%");
-    expect(fmtSignedPct(0)).toBe("+0%");
+  it("fmtSignedPct adds a sign, rounds to 2 decimals, handles null", () => {
+    expect(fmtSignedPct(12.3)).toBe("+12.30%");
+    expect(fmtSignedPct(-4.5)).toBe("-4.50%");
+    expect(fmtSignedPct(0)).toBe("+0.00%");
+    expect(fmtSignedPct(327.773)).toBe("+327.77%");
     expect(fmtSignedPct(null)).toBe("—");
     expect(fmtSignedPct(undefined)).toBe("—");
   });

@@ -58,7 +58,7 @@ describe("expansion: 2-axis chart + related news", () => {
     expect(screen.getByTestId("timing-two-axis")).toBeInTheDocument();
     expect(screen.getByText("장기(5년)")).toBeInTheDocument();
     expect(screen.getByText("최근 흐름")).toBeInTheDocument();
-    expect(screen.getByText("+42%")).toBeInTheDocument();
+    expect(screen.getByText("+42.00%")).toBeInTheDocument();
   });
 
   it("shows related news only for the signal's contextNewsIds", () => {

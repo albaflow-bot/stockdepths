@@ -21,17 +21,17 @@ export function riskTone(level: BadgeLevel): BadgeTone {
   return level === "high" ? "negative" : level === "medium" ? "warning" : "positive";
 }
 
-/** Format a percent value with a sign (e.g. +12.3% / -4.5%), or "—" when null. */
+/** Format a percent value with a sign to 2 decimals (e.g. +12.30% / -4.50%), or "—" when null. */
 export function fmtSignedPct(v: number | null | undefined): string {
   if (v == null || !Number.isFinite(v)) return "—";
   const sign = v >= 0 ? "+" : "";
-  return `${sign}${v}%`;
+  return `${sign}${v.toFixed(2)}%`;
 }
 
-/** Format a percent value without forcing a sign, or "—" when null. */
+/** Format a percent value (2 decimals) without forcing a sign, or "—" when null. */
 export function fmtPct(v: number | null | undefined): string {
   if (v == null || !Number.isFinite(v)) return "—";
-  return `${v}%`;
+  return `${v.toFixed(2)}%`;
 }
 
 /** Tone for a return number: positive → green, negative → red, zero → muted. */

@@ -86,7 +86,7 @@ describe("periodStart", () => {
     expect(periodStart("2024-06-21", "1W")).toBe("2024-06-14");
     expect(periodStart("2024-06-21", "1M")).toBe("2024-05-21");
     expect(periodStart("2024-06-21", "3M")).toBe("2024-03-21");
-    expect(periodStart("2024-06-21", "YTD")).toBe("2024-01-01");
+    expect(periodStart("2024-06-21", "1Y")).toBe("2023-06-22"); // 최근 365일 trailing
     expect(periodStart("2024-06-21", "ALL")).toBe("0000-01-01");
   });
 });

@@ -47,10 +47,10 @@ export interface TrackRecordEntry {
   loggedAt: string;
 }
 
-/** Scorecard reporting periods (SPEC §3.2 / IA: filterable 1W/1M/3M/YTD). */
-export type ScorecardPeriod = "1W" | "1M" | "3M" | "YTD" | "ALL";
+/** Scorecard reporting periods (SPEC §3.2 / IA: filterable 1W/1M/3M/1Y). 1Y = 최근 365일. */
+export type ScorecardPeriod = "1W" | "1M" | "3M" | "1Y" | "ALL";
 
-export const ALL_PERIODS: readonly ScorecardPeriod[] = ["1W", "1M", "3M", "YTD", "ALL"];
+export const ALL_PERIODS: readonly ScorecardPeriod[] = ["1W", "1M", "3M", "1Y", "ALL"];
 
 /** A single recommendation's realized outcome (one "trade"). */
 export interface RealizedOutcome {
@@ -74,6 +74,18 @@ export interface BacktestAggregate {
   maxDrawdownPct: number;
   /** How many recommendations contributed a backtest snapshot. */
   sampleSize: number;
+}
+
+/** One recommendation's realized line within a period (전체 추천 목록 표시용). */
+export interface ScorecardEntry {
+  symbol: string;
+  date: string;
+  /** 실현 수익률 entry→asOf, % — 아직 평가 불가면 null. */
+  returnPct: number | null;
+  /** 같은 기간 벤치마크 수익률, %. */
+  benchmarkReturnPct: number | null;
+  /** returnPct − benchmarkReturnPct (초과수익, %p). */
+  excessReturnPct: number | null;
 }
 
 /** Aggregate metrics for one period, derived (never stored) from the log. */
@@ -102,6 +114,8 @@ export interface ScorecardMetrics {
   /** Best/worst single recommendation by realized return (honesty). */
   best?: { symbol: string; date: string; returnPct: number };
   worst?: { symbol: string; date: string; returnPct: number };
+  /** 이 기간의 모든 추천(수익률 desc; 미평가분은 returnPct=null로 뒤에). */
+  entries: ScorecardEntry[];
   /** 5Y backtest aggregate for the period (realized 옆 백테스트 비교용). */
   backtest?: BacktestAggregate;
 }

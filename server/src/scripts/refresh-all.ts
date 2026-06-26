@@ -13,6 +13,18 @@
  */
 
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+
+// 스케줄러 등 세션 주입 env 가 없는 환경에서도 돌도록 server/.env 를 로드(있으면).
+// 자식 tsx 프로세스는 spawnSync 의 env 로 이 값을 상속한다. .env 없으면 ambient env 사용.
+function loadDotenv(): void {
+  if (!existsSync(".env")) return;
+  try {
+    process.loadEnvFile(".env");
+  } catch (e) {
+    console.warn(`[refresh] .env 로드 실패(ambient env 사용): ${e instanceof Error ? e.message : e}`);
+  }
+}
 
 interface Step {
   label: string;
@@ -37,6 +49,7 @@ const STEPS: Step[] = [
 const TSX = process.platform === "win32" ? "tsx.cmd" : "tsx";
 
 function main(): void {
+  loadDotenv();
   const results: Array<{ label: string; ok: boolean; critical: boolean; code: number | null }> = [];
   for (const s of STEPS) {
     console.log(`\n=== [${s.label}] ${s.script} ${s.args.join(" ")} ===`);

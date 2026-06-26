@@ -45,7 +45,7 @@ describe("PortfolioScreen", () => {
     fireEvent.click(screen.getByTestId("holding-add-button"));
 
     await waitFor(() => expect(screen.getByTestId("holding-card-AAPL")).toBeInTheDocument());
-    expect(screen.getByTestId("holding-return-AAPL")).toHaveTextContent("+20%"); // (120-100)/100
+    expect(screen.getByTestId("holding-return-AAPL")).toHaveTextContent("+20.00%"); // (120-100)/100
     // Portfolio summary reflects +$200 gain.
     expect(screen.getByTestId("summary-gain")).toHaveTextContent("+$200.00");
   });

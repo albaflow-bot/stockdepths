@@ -20,7 +20,7 @@ describe("PickableStockRow (one-tap toggle, SPEC §5.5-4)", () => {
     expect(screen.getByText("AMD")).toBeInTheDocument();
     expect(screen.getByText("에이엠디")).toBeInTheDocument();
     expect(screen.getByText("$150.00")).toBeInTheDocument();
-    expect(screen.getByText("+6%")).toBeInTheDocument();
+    expect(screen.getByText("+6.00%")).toBeInTheDocument();
     expect(screen.getByText("매수 적정")).toBeInTheDocument(); // TimingBadge label
   });
 

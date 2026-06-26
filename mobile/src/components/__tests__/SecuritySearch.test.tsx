@@ -107,7 +107,7 @@ describe("SecuritySearchCard 표시", () => {
   it("KR 가격은 원, 등락은 ▲ + 색", () => {
     render(<SecuritySearchCard item={SAMSUNG} watched={false} held={false} onAddWatch={() => {}} onAddHolding={() => {}} />);
     expect(screen.getByText("78,400원")).toBeInTheDocument();
-    expect(screen.getByText(/▲ \+1.6% \(오늘\)/)).toBeInTheDocument();
+    expect(screen.getByText(/▲ \+1.60% \(오늘\)/)).toBeInTheDocument();
     expect(screen.getByText(/한 줄 신호: 매수 적정/)).toBeInTheDocument();
   });
 

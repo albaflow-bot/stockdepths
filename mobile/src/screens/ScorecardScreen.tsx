@@ -26,7 +26,7 @@ const DEFAULT_PERIOD: ScorecardPeriod = "1M";
 /**
  * 성적표 tab — honest performance (SPEC Task 9 + §5.6). Headline = benchmark-relative
  * cumulative excess return (win rate, per-trade average, MDD), PLUS the timing-signal
- * 적중률 panel (메인 기능 정직성 증명), filterable by 1W/1M/3M/YTD, infographic-first.
+ * 적중률 panel (메인 기능 정직성 증명), filterable by 1W/1M/3M/1Y, infographic-first.
  */
 export function ScorecardScreen({ loader, timingLoader = fetchTimingAccuracy, initialPeriod = DEFAULT_PERIOD }: ScorecardScreenProps) {
   const { status, scorecard, errorMessage, reload } = useScorecard(loader);
@@ -138,6 +138,34 @@ function ScorecardBody({ metrics, benchmarkSymbol }: { metrics: ScorecardMetrics
           ) : null}
         </View>
       ) : null}
+
+      {/* 전체 추천 목록 — 최고/최저만이 아니라 무엇을 추천했고 각각 성적이 어떤지 전부 공개. */}
+      {metrics.entries && metrics.entries.length > 0 ? (
+        <View style={styles.entriesWrap} testID="scorecard-entries">
+          <Text style={styles.entriesTitle}>전체 추천 ({metrics.entries.length}건)</Text>
+          <View style={styles.entryHead}>
+            <Text style={[styles.entryHeadText, styles.colSym]}>종목</Text>
+            <Text style={[styles.entryHeadText, styles.colRet]}>수익률</Text>
+            <Text style={[styles.entryHeadText, styles.colExc]}>초과</Text>
+          </View>
+          {metrics.entries.map((e, i) => (
+            <View key={`${e.symbol}-${e.date}-${i}`} style={styles.entryRow}>
+              <View style={styles.colSym}>
+                <Text style={styles.entrySymbol}>{e.symbol}</Text>
+                <Text style={styles.entryDate}>{e.date}</Text>
+              </View>
+              <Text
+                style={[styles.entryRet, styles.colRet, { color: badgeColors[returnTone(e.returnPct)].fg }]}
+              >
+                {e.returnPct == null ? "평가 전" : fmtSignedPct(e.returnPct)}
+              </Text>
+              <Text style={[styles.entryExc, styles.colExc]}>
+                {e.excessReturnPct == null ? "—" : fmtSignedPct(e.excessReturnPct)}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -168,4 +196,41 @@ const styles = StyleSheet.create({
   bwWorst: { backgroundColor: tokens.color.negativeBg },
   bwLabel: { fontSize: tokens.font.size.xs, color: tokens.color.textSecondary },
   bwText: { fontSize: tokens.font.size.md, fontWeight: tokens.font.weight.bold, color: tokens.color.textPrimary },
+
+  entriesWrap: {
+    marginTop: tokens.space.lg,
+    backgroundColor: tokens.color.surface,
+    borderWidth: 1,
+    borderColor: tokens.color.border,
+    borderRadius: tokens.radius.lg,
+    padding: tokens.space.md,
+  },
+  entriesTitle: {
+    fontSize: tokens.font.size.md,
+    fontWeight: tokens.font.weight.bold,
+    color: tokens.color.textPrimary,
+    marginBottom: tokens.space.sm,
+  },
+  entryHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingBottom: tokens.space.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: tokens.color.border,
+  },
+  entryHeadText: { fontSize: tokens.font.size.xs, color: tokens.color.textMuted, fontWeight: tokens.font.weight.medium },
+  entryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: tokens.space.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: tokens.color.border,
+  },
+  colSym: { flex: 1.4 },
+  colRet: { flex: 1, textAlign: "right" },
+  colExc: { flex: 1, textAlign: "right" },
+  entrySymbol: { fontSize: tokens.font.size.sm, fontWeight: tokens.font.weight.bold, color: tokens.color.textPrimary },
+  entryDate: { fontSize: tokens.font.size.xs, color: tokens.color.textMuted },
+  entryRet: { fontSize: tokens.font.size.sm, fontWeight: tokens.font.weight.bold },
+  entryExc: { fontSize: tokens.font.size.sm, color: tokens.color.textSecondary },
 });

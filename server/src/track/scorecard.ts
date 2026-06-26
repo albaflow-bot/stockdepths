@@ -20,6 +20,7 @@ import {
   ALL_PERIODS,
   type RealizedOutcome,
   type Scorecard,
+  type ScorecardEntry,
   type ScorecardMetrics,
   type ScorecardPeriod,
   type TrackRecordEntry,
@@ -34,11 +35,12 @@ export interface ScorecardServiceOptions {
 /** Inclusive lower-bound entry date for a period, relative to `asOf`. Pure. */
 export function periodStart(asOf: string, period: ScorecardPeriod): string {
   if (period === "ALL") return "0000-01-01";
-  if (period === "YTD") return `${asOf.slice(0, 4)}-01-01`;
   const d = new Date(`${asOf}T00:00:00Z`);
   if (period === "1W") d.setUTCDate(d.getUTCDate() - 7);
   else if (period === "1M") d.setUTCMonth(d.getUTCMonth() - 1);
   else if (period === "3M") d.setUTCMonth(d.getUTCMonth() - 3);
+  // 1Y = 최근 365일 trailing (올해 누적 YTD 가 1/1 에 1일치만 잡히는 문제 회피).
+  else if (period === "1Y") d.setUTCDate(d.getUTCDate() - 365);
   return d.toISOString().slice(0, 10);
 }
 
@@ -161,6 +163,21 @@ export class ScorecardService {
     // 5Y backtest aggregate over the period's logged snapshots (realized 옆 비교용).
     const backtest = aggregateBacktest(inPeriod.map((e) => e.entry.backtest));
 
+    // 전체 추천 목록: 평가분은 수익률 포함, 미평가분은 null. 수익률 desc(미평가는 뒤).
+    const entries: ScorecardEntry[] = inPeriod
+      .map((e) =>
+        e.outcome
+          ? {
+              symbol: e.outcome.symbol,
+              date: e.outcome.date,
+              returnPct: round2(e.outcome.returnPct),
+              benchmarkReturnPct: round2(e.outcome.benchmarkReturnPct),
+              excessReturnPct: round2(e.outcome.excessReturnPct),
+            }
+          : { symbol: e.entry.symbol, date: e.entry.date, returnPct: null, benchmarkReturnPct: null, excessReturnPct: null },
+      )
+      .sort((a, b) => (b.returnPct ?? -Infinity) - (a.returnPct ?? -Infinity));
+
     const base: ScorecardMetrics = {
       period,
       periodStart: start,
@@ -175,6 +192,7 @@ export class ScorecardService {
       excessReturnPct: null,
       maxDrawdownPct: null,
       backtest,
+      entries,
     };
     if (withOutcome.length === 0) return base;
 

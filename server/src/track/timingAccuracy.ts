@@ -4,7 +4,7 @@
  * log (Task 4) and, against later real prices, scores:
  *   • Buy  → 적중 when the price ROSE over the horizon (상승 적중),
  *   • Sell → 적중 when the price FELL over the horizon (하락 회피),
- * published per 1W/1M/3M/YTD period.
+ * published per 1W/1M/3M/1Y period.
  *
  * This module is READ-ONLY over the immutable log — it never rewrites a signal, so
  * the past can't be massaged (SPEC §5.6 / append-only contract). The hit criterion

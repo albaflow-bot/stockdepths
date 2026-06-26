@@ -8,7 +8,7 @@ export interface PeriodFilterProps {
   onSelect: (p: ScorecardPeriod) => void;
 }
 
-/** Segmented control to filter the scorecard by period (1W/1M/3M/YTD). */
+/** Segmented control to filter the scorecard by period (1W/1M/3M/1Y). */
 export function PeriodFilter({ periods, selected, onSelect }: PeriodFilterProps) {
   return (
     <View style={styles.bar} accessibilityRole="tablist" testID="period-filter">

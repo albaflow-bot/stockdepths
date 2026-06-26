@@ -58,8 +58,8 @@ export const SAMPLE_SCORECARD: Scorecard = {
       backtest: { excessReturnPct: 6.1, winRatePct: 44.0, avgTradeReturnPct: 4.9, maxDrawdownPct: -28.5, sampleSize: 13 },
     },
     {
-      period: "YTD",
-      periodStart: "2026-01-01",
+      period: "1Y",
+      periodStart: "2025-06-21",
       asOf: "2026-06-21",
       recommendations: 24,
       evaluated: 22,

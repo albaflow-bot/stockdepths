@@ -23,7 +23,7 @@ describe("TimingAccuracyPanel", () => {
     expect(screen.getByText("매수 → 상승 적중")).toBeInTheDocument();
     expect(screen.getByText("매도 → 하락 회피")).toBeInTheDocument();
     expect(screen.getByTestId("timing-accuracy-buy-rate")).toHaveTextContent("66.67%");
-    expect(screen.getByTestId("timing-accuracy-sell-rate")).toHaveTextContent("75%");
+    expect(screen.getByTestId("timing-accuracy-sell-rate")).toHaveTextContent("75.00%");
     expect(screen.getByText("6건 평가 중 4건 적중")).toBeInTheDocument();
   });
 
