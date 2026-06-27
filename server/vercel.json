@@ -6,6 +6,8 @@
     }
   },
   "rewrites": [
+    { "source": "/download/app-release.apk", "destination": "https://fifulgqbrblxdrfwlcsb.supabase.co/storage/v1/object/public/releases/app-release.apk" },
+    { "source": "/download", "destination": "https://fifulgqbrblxdrfwlcsb.supabase.co/storage/v1/object/public/releases/app-release.apk" },
     { "source": "/api/(.*)", "destination": "/api/[[...slug]]" }
   ]
 }

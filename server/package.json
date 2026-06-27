@@ -17,6 +17,7 @@
     "batch:cli": "tsx src/scripts/run-batch-claudecli.ts",
     "batch:screen": "tsx src/scripts/run-screen-batch.ts",
     "refresh": "tsx src/scripts/refresh-all.ts",
+    "release:publish": "tsx src/scripts/publish-release.ts",
     "ingest:master:us": "tsx src/scripts/ingest-master-us.ts",
     "ingest:us:snapshot": "tsx src/scripts/ingest-us-nasdaq.ts",
     "ingest:kr": "tsx src/scripts/ingest-kr-naver.ts",
