@@ -35,6 +35,7 @@ interface SearchView {
   low_52w: number | null;
   rsi14: number | null;
   weekly: number[] | null;
+  market_cap: number | null;
 }
 
 function truthy(v: number | boolean | null): boolean {
@@ -69,9 +70,10 @@ function toScreened(r: SearchView, fallbackAsof: string): ScreenedSymbol {
       high_52w: r.high_52w,
       low_52w: r.low_52w,
       rsi14: r.rsi14,
+      market_cap: r.market_cap,
     },
     weeklyCloses: Array.isArray(r.weekly) ? r.weekly.filter((n) => typeof n === "number") : [],
-    marketCap: null, // 무료 스냅샷엔 시총 없음 — 대형주 배제는 그 종목에 비활성(adapterScan 과 동일 한계).
+    marketCap: r.market_cap, // 시총 있으면 대형주 식별·분리 동작(없으면 null).
     listedDays: null,
     isManaged: false,
     isPreferred: isKrPreferred(r.market, r.code),
@@ -94,7 +96,7 @@ export function makeSnapshotScanSource(opts: SnapshotScanOptions): () => Promise
   const markets = marketsInGroup(opts.group);
   const marketFilter = `market=in.(${markets.join(",")})`;
   const select =
-    "select=market,code,name_ko,name_en,is_etf,delisted,asof,last,change_pct,volume,turnover,rvol,high_52w,low_52w,rsi14,weekly";
+    "select=market,code,name_ko,name_en,is_etf,delisted,asof,last,change_pct,volume,turnover,rvol,high_52w,low_52w,rsi14,weekly,market_cap";
 
   return async () => {
     const out: ScreenedSymbol[] = [];

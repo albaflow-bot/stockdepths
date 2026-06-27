@@ -28,6 +28,7 @@ interface NaverStock {
   compareToPreviousPrice?: { text?: string }; // "상승" | "하락" | "보합"
   accumulatedTradingVolume?: string; // "34,552,588"
   accumulatedTradingValue?: string; // 백만원 단위 "12,381,294"
+  marketValueRaw?: string; // 시가총액 KRW raw "1984811587416000"
   localTradedAt?: string; // "2026-06-25T16:10:20+09:00"
 }
 
@@ -111,6 +112,7 @@ async function ingestMarket(market: ExchangeMarket): Promise<MarketResult> {
         high_52w: null,
         low_52w: null,
         rsi14: null,
+        market_cap: num(s.marketValueRaw),
       });
     }
     page += 1;

@@ -20,6 +20,7 @@ interface NasdaqRow {
   lastsale?: string; // "$196.31"
   pctchange?: string; // "-1.352%"
   volume?: string; // "34,552,588"
+  marketCap?: string; // "4,750,702,000,000"
 }
 
 /** screener exchange 필터 → 우리 ExchangeMarket. AMEX 는 마스터에서 NYSE 로 접었으므로 NYSE. */
@@ -73,6 +74,7 @@ async function main(): Promise<void> {
         high_52w: null,
         low_52w: null,
         rsi14: null,
+        market_cap: numFrom(r.marketCap),
       });
       kept++;
     }

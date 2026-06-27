@@ -38,6 +38,8 @@ export interface DailyScreenRecord {
   high_52w: number | null;
   low_52w: number | null;
   rsi14: number | null;
+  /** 시가총액(원/달러) — 대형주 식별·분리용. 무료 소스에 있으면 채움, 없으면 null/생략. */
+  market_cap?: number | null;
 }
 
 /** 주간 추이 한 행 (스파크라인). closes = 최근 7거래일 종가. */

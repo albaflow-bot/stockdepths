@@ -137,6 +137,7 @@ export function computeScreenedSymbol(input: SymbolScanInput, asof: string): Scr
     high_52w: round(high52w),
     low_52w: round(low52w),
     rsi14: round(rsi14(closes), 2),
+    market_cap: marketCap,
   };
 
   return {

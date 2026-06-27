@@ -65,8 +65,11 @@ function toSearchItem(d: DiscoveryItem): SecuritySearchItem {
 
 /** 모멘텀 카테고리는 "시총 상위 N 제외", 대금집중은 초대형주 이례신호 규칙을 표기. */
 function largeCapNote(category: ScreenCategory, market: DiscoveryArtifact["market"]): string {
+  if (category === "large_cap_movers") {
+    return `시총 상위 ${LARGE_CAP_TOP_N[market]} 대형주 중 오늘 크게 움직인 종목 (모멘텀에선 빼고 여기 따로)`;
+  }
   if (CATEGORY_META[category].momentum) {
-    return `시가총액 상위 ${LARGE_CAP_TOP_N[market]} 종목 제외 (대형주 — 어디서나 얻는 정보)`;
+    return `시총 상위 ${LARGE_CAP_TOP_N[market]} 대형주 제외 — 아래 '💎 대형주 무버'에서 따로 봄`;
   }
   return "초대형주는 이례신호(RVOL≥3·갭±5%)가 있을 때만 노출";
 }

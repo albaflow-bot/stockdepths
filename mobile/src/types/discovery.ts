@@ -12,7 +12,8 @@ export type ScreenCategory =
   | "volume_surge"
   | "unusual_value"
   | "breakout"
-  | "oversold_bounce";
+  | "oversold_bounce"
+  | "large_cap_movers";
 
 /** 발굴 결과 한 종목 (서버 ScreenResultItem). */
 export interface DiscoveryItem {
@@ -61,6 +62,7 @@ export const CATEGORY_ORDER: ScreenCategory[] = [
   "unusual_value",
   "oversold_bounce",
   "losers",
+  "large_cap_movers",
 ];
 
 export const CATEGORY_META: Record<ScreenCategory, CategoryMeta> = {
@@ -70,6 +72,7 @@ export const CATEGORY_META: Record<ScreenCategory, CategoryMeta> = {
   unusual_value: { label: "💰 대금집중", momentum: false, description: "당일 거래대금 상위" },
   breakout: { label: "📈 신고가/돌파", momentum: true, description: "52주 신고가 경신·박스권 돌파" },
   oversold_bounce: { label: "↩️ 과매도 반등", momentum: true, description: "RSI<30 이탈 후 반등 캔들" },
+  large_cap_movers: { label: "💎 대형주 무버", momentum: false, description: "시총 상위 대형주 중 오늘 크게 움직인 종목" },
 };
 
 /** 시장별 대형주 배제 상위 N (서버 config 기본값과 일치 — UI 명시용). */

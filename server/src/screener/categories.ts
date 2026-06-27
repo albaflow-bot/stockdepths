@@ -20,7 +20,8 @@ export type ScreenCategory =
   | "volume_surge"
   | "unusual_value"
   | "breakout"
-  | "oversold_bounce";
+  | "oversold_bounce"
+  | "large_cap_movers";
 
 /** 한국어 라벨 (SPEC §1-Δ 표). */
 export const CATEGORY_LABELS: Record<ScreenCategory, string> = {
@@ -30,6 +31,7 @@ export const CATEGORY_LABELS: Record<ScreenCategory, string> = {
   unusual_value: "💰 대금집중",
   breakout: "📈 신고가/돌파",
   oversold_bounce: "↩️ 과매도 반등",
+  large_cap_movers: "💎 대형주 무버",
 };
 
 /** 모멘텀 카테고리 = 대형주를 완전히 배제하는 카테고리. unusual_value 만 예외. */
@@ -121,6 +123,13 @@ export function selectCategory(
         )
         .sort((a, b) => (a.screen.rsi14 ?? 0) - (b.screen.rsi14 ?? 0));
       break;
+    case "large_cap_movers":
+      // 대형주(시총 상위)는 모멘텀에서 빼되 *오늘 움직인 것*만 따로 모아 보여준다
+      // (제외 ✗ → 분리). |등락률| 큰 순. 단순 시총 순위표가 되지 않게 변동 있는 것만.
+      qualified = pool
+        .filter((s) => s.isLargeCap && num(s.screen.change_pct) != null && s.screen.change_pct !== 0)
+        .sort((a, b) => Math.abs(b.screen.change_pct ?? 0) - Math.abs(a.screen.change_pct ?? 0));
+      break;
   }
 
   return qualified.slice(0, t.perCategory).map((symbol) => ({ category, symbol }));
@@ -137,6 +146,7 @@ export function screenCategories(
     "unusual_value",
     "breakout",
     "oversold_bounce",
+    "large_cap_movers",
   ],
 ): Record<ScreenCategory, ScreenCandidate[]> {
   const out = {} as Record<ScreenCategory, ScreenCandidate[]>;

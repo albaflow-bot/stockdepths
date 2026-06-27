@@ -77,7 +77,9 @@ describe("DiscoveryTab (6 카테고리 섹션)", () => {
   it("모멘텀 카테고리는 '상위 N 제외' 대형주 배제를 UI 에 명시", async () => {
     render(<DiscoveryTab loader={async () => artifact("US")} onAddWatch={() => {}} onAddHolding={() => {}} />);
     await waitFor(() => expect(screen.getByTestId("discovery-section-gainers")).toBeInTheDocument());
-    expect(screen.getByTestId("discovery-section-gainers-largecap-note").textContent).toMatch(/상위 50 종목 제외/);
+    expect(screen.getByTestId("discovery-section-gainers-largecap-note").textContent).toMatch(/상위 50 대형주 제외/);
+    // 대형주는 숨기지 않고 '대형주 무버' 섹션으로 분리.
+    expect(screen.getByTestId("discovery-section-large_cap_movers")).toBeInTheDocument();
     // 대금집중은 초대형주 이례신호 규칙을 표기.
     expect(screen.getByTestId("discovery-section-unusual_value-largecap-note").textContent).toMatch(/이례신호/);
   });

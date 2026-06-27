@@ -118,8 +118,12 @@ create table if not exists public.daily_screen (
   high_52w   double precision,
   low_52w    double precision,
   rsi14      double precision,
+  market_cap double precision,   -- 시가총액(원/달러) — 대형주 식별·분리용
   primary key (market, code, asof)
 );
+
+-- 기존 DB 에 market_cap 컬럼 보강(멱등).
+alter table public.daily_screen add column if not exists market_cap double precision;
 
 -- (market, code, asof) 복합 PK 가 일별 조회를 이미 가속하지만, 카테고리
 -- 스크리닝은 "특정 asof 의 전종목을 등락률/거래대금/RVOL 로 정렬"하므로
@@ -147,11 +151,12 @@ select
   m.market, m.code, m.name_ko, m.name_en, m.is_etf, m.delisted,
   d.asof, d.last, d.change_pct, d.volume, d.turnover, d.rvol,
   d.high_52w, d.low_52w, d.rsi14,
-  w.closes as weekly
+  w.closes as weekly,
+  d.market_cap
 from public.security_master m
 left join lateral (
   select ds.asof, ds.last, ds.change_pct, ds.volume, ds.turnover,
-         ds.rvol, ds.high_52w, ds.low_52w, ds.rsi14
+         ds.rvol, ds.high_52w, ds.low_52w, ds.rsi14, ds.market_cap
   from public.daily_screen ds
   where ds.market = m.market and ds.code = m.code
   order by ds.asof desc
