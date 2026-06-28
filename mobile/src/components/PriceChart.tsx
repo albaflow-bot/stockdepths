@@ -55,6 +55,8 @@ export function PriceChart({ closes, market, height = 140, dates, formatValue, t
   const trend = priceChartTrend(closes);
   const color = marketDirectionColor(representativeExchange(market), directionOf(trend));
   const n = fractions.length;
+  // 기준선 = 기간 시작가 높이. 막대 픽셀식(f*(height-4)+2)에 패딩(xs)을 더해 막대와 정렬.
+  const baseBottom = tokens.space.xs + Math.round(fractions[0]! * (height - 4)) + 2;
   const interactive = !!dates && !!formatValue && dates.length === closes.length;
 
   const pick = (e: GestureResponderEvent) => {
@@ -88,6 +90,8 @@ export function PriceChart({ closes, market, height = 140, dates, formatValue, t
         onResponderGrant={pick}
         onResponderMove={pick}
       >
+        {/* 기준선: 기간 시작가 — 위/아래로 올랐는지 한눈에. */}
+        <View style={[styles.baseline, { bottom: baseBottom }]} testID={`${tid}-baseline`} pointerEvents="none" />
         {fractions.map((f, i) => (
           <View
             key={i}
@@ -129,6 +133,15 @@ const styles = StyleSheet.create({
   },
   bar: { flex: 1, borderTopLeftRadius: 1, borderTopRightRadius: 1, minWidth: 1, opacity: 0.85 },
   barSelected: { backgroundColor: tokens.color.primary },
+  baseline: {
+    position: "absolute",
+    left: tokens.space.xs,
+    right: tokens.space.xs,
+    height: 0,
+    borderTopWidth: 1,
+    borderStyle: "dashed",
+    borderColor: tokens.color.border,
+  },
   empty: {
     backgroundColor: tokens.color.surfaceAlt,
     borderRadius: tokens.radius.sm,

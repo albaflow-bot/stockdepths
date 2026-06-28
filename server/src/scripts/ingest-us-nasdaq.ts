@@ -15,7 +15,7 @@
 import { createScreenStore, storageMode } from "../storage/index.js";
 import type { ExchangeMarket, DailyScreenRecord } from "../screener/types.js";
 
-interface NasdaqRow {
+export interface NasdaqRow {
   symbol?: string;
   lastsale?: string; // "$196.31"
   pctchange?: string; // "-1.352%"
@@ -36,6 +36,33 @@ function numFrom(s: string | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * Nasdaq screener 한 행(JSON) → DailyScreenRecord. 순수 함수(테스트 가능).
+ * 거래량 0/null(PREOPEN/미체결) 또는 symbol 누락 → null 반환(스킵 신호).
+ */
+export function parseNasdaqRow(r: NasdaqRow, market: ExchangeMarket, asof: string): DailyScreenRecord | null {
+  const code = (r.symbol ?? "").trim().toUpperCase();
+  if (!code) return null;
+  const last = numFrom(r.lastsale);
+  const volume = numFrom(r.volume);
+  // PREOPEN/미체결(거래량 0/null)이면 빈 세션 행으로 직전 정상 EOD 를 덮지 않도록 건너뜀.
+  if (volume == null || volume <= 0) return null;
+  return {
+    market,
+    code,
+    asof,
+    last,
+    change_pct: numFrom(r.pctchange),
+    volume,
+    turnover: last != null && volume != null ? last * volume : null,
+    rvol: null,
+    high_52w: null,
+    low_52w: null,
+    rsi14: null,
+    market_cap: numFrom(r.marketCap),
+  };
+}
+
 async function fetchExchange(exchange: string): Promise<NasdaqRow[]> {
   const url = `https://api.nasdaq.com/api/screener/stocks?tableonly=true&download=true&exchange=${exchange}&limit=10000`;
   const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json" } });
@@ -54,28 +81,11 @@ async function main(): Promise<void> {
     const rows = await fetchExchange(q);
     let kept = 0;
     for (const r of rows) {
-      const code = (r.symbol ?? "").trim().toUpperCase();
-      if (!code) continue;
-      const last = numFrom(r.lastsale);
-      const volume = numFrom(r.volume);
-      // PREOPEN/미체결(거래량 0/null)이면 빈 세션 행으로 직전 정상 EOD 를 덮지 않도록 건너뜀.
-      if (volume == null || volume <= 0) continue;
-      const key = `${market}:${code}`;
+      const rec = parseNasdaqRow(r, market, asof);
+      if (rec == null) continue;
+      const key = `${market}:${rec.code}`;
       if (byKey.has(key)) continue; // 거래소 우선순위(앞선 매핑 우선)
-      byKey.set(key, {
-        market,
-        code,
-        asof,
-        last,
-        change_pct: numFrom(r.pctchange),
-        volume,
-        turnover: last != null && volume != null ? last * volume : null,
-        rvol: null,
-        high_52w: null,
-        low_52w: null,
-        rsi14: null,
-        market_cap: numFrom(r.marketCap),
-      });
+      byKey.set(key, rec);
       kept++;
     }
     console.log(`[ingest:us:snapshot] ${q}→${market}: ${rows.length}행 · 적재 ${kept}`);
@@ -90,7 +100,16 @@ async function main(): Promise<void> {
   console.log(`[ingest:us:snapshot] done — US 전종목 당일 스냅샷 ${screen.length} 적재`);
 }
 
-main().catch((err) => {
-  console.error("[ingest:us:snapshot] failed:", err);
-  process.exitCode = 1;
-});
+// 직접 실행될 때만 ingest 수행(테스트가 파싱 함수만 import 할 때는 main() 미실행).
+const isEntrypoint = (() => {
+  const arg = process.argv[1];
+  if (!arg) return false;
+  const norm = arg.replace(/\\/g, "/");
+  return import.meta.url.endsWith(norm) || import.meta.url.endsWith(norm.replace(/\.ts$/, ".js"));
+})();
+if (isEntrypoint) {
+  main().catch((err) => {
+    console.error("[ingest:us:snapshot] failed:", err);
+    process.exitCode = 1;
+  });
+}

@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePortfolio, type UsePortfolioDeps } from "./usePortfolio";
 import { computePortfolioPnL, type HoldingPnL } from "../portfolio/pnl";
-import { evaluateHoldingRule } from "../services/onDeviceRule";
+import { evaluateHoldingRule, OnDeviceRuleService } from "../services/onDeviceRule";
 import {
   MarketIndexCacheRepository,
   refreshIndices,
@@ -35,6 +35,8 @@ export interface UseWatchlistTabDeps extends UsePortfolioDeps {
   dashboardLoader?: DashboardLoader;
   /** Index cache repo for stale-first header rendering. */
   marketCache?: MarketIndexCacheRepository;
+  /** 목표가/손절 도달 시 로컬 알림을 발화하는 엔진(테스트 주입). 기본은 실제 서비스. */
+  ruleService?: OnDeviceRuleService;
 }
 
 /** A holding row: P&L + its ordered timing signals (personal first) + news count. */
@@ -129,6 +131,22 @@ export function useWatchlistTab(deps: UseWatchlistTabDeps = {}): WatchlistTabCon
     for (const [sym, q] of Object.entries(pf.quotes)) m[sym] = q.price;
     return m;
   }, [pf.quotes]);
+
+  // 🎯 북극성: 보유종목이 목표가/손절선에 *도달*하면 로컬 알림 발화 + 알림함 기록.
+  // quote(지연시세)가 갱신될 때마다 평가 — 발화는 엔진 내부에서 하루 1회로 dedup(원격 FCM
+  // 불필요한 단말 규칙, SPEC §5.4). 베스트에포트라 실패해도 화면을 막지 않는다.
+  const ruleService = useMemo(() => deps.ruleService ?? new OnDeviceRuleService(), [deps.ruleService]);
+  useEffect(() => {
+    const holdings = pf.portfolio.holdings;
+    if (holdings.length === 0 || Object.keys(pf.quotes).length === 0) return;
+    const ruleQuotes = Object.entries(pf.quotes).map(([sym, q]) => ({
+      symbol: sym,
+      price: q.price,
+      changePercent: q.changePercent,
+      asOf: q.asOf,
+    }));
+    void ruleService.evaluate(holdings, ruleQuotes, deps.persona);
+  }, [ruleService, pf.portfolio.holdings, pf.quotes, deps.persona]);
 
   const { rows: pnlRows } = useMemo(
     () => computePortfolioPnL(pf.portfolio.holdings, priceMap),

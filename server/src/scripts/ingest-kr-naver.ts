@@ -19,7 +19,7 @@ const MARKETS: ExchangeMarket[] = ["KOSPI", "KOSDAQ"];
 const PAGE_SIZE = 100;
 const UA = "Mozilla/5.0";
 
-interface NaverStock {
+export interface NaverStock {
   itemCode?: string;
   stockName?: string;
   stockEndType?: string; // 'stock' | 'etf' | ...
@@ -54,6 +54,54 @@ function signedPct(item: NaverStock): number | null {
   return Math.abs(mag);
 }
 
+export interface ParsedNaverStock {
+  master: SecurityMasterRecord;
+  /** 거래대금 0/null(PREOPEN/미체결)이면 null → daily_screen 적재 스킵(마스터는 갱신). */
+  screen: DailyScreenRecord | null;
+}
+
+/**
+ * 네이버 marketValue stock 한 건 → { master, screen|null }. 순수 함수(테스트 가능).
+ * itemCode 누락 → null 반환(스킵 신호).
+ */
+export function parseNaverStock(market: ExchangeMarket, s: NaverStock): ParsedNaverStock | null {
+  const code = (s.itemCode ?? "").trim();
+  if (!code) return null;
+  const asof = (s.localTradedAt ?? "").slice(0, 10) || new Date().toISOString().slice(0, 10);
+
+  const master: SecurityMasterRecord = {
+    market,
+    code,
+    name_ko: s.stockName?.trim() || null,
+    name_en: null,
+    is_etf: s.stockEndType === "etf",
+    delisted: false,
+  };
+  // 거래대금(백만원 단위 → KRW). PREOPEN/장중 미체결이면 null → 그 빈 세션 행으로
+  // 직전 정상 EOD 를 덮어쓰지 않도록 daily_screen 적재를 건너뛴다(마스터는 갱신).
+  const v = num(s.accumulatedTradingValue);
+  const turnoverKrw = v == null ? null : v * 1_000_000;
+  if (turnoverKrw == null || turnoverKrw <= 0) return { master, screen: null };
+
+  return {
+    master,
+    screen: {
+      market,
+      code,
+      asof,
+      last: num(s.closePrice),
+      change_pct: signedPct(s),
+      volume: num(s.accumulatedTradingVolume),
+      turnover: turnoverKrw,
+      rvol: null,
+      high_52w: null,
+      low_52w: null,
+      rsi14: null,
+      market_cap: num(s.marketValueRaw),
+    },
+  };
+}
+
 async function fetchPage(market: ExchangeMarket, page: number): Promise<NaverPage> {
   const url = `https://m.stock.naver.com/api/stocks/marketValue/${market}?page=${page}&pageSize=${PAGE_SIZE}`;
   const res = await fetch(url, { headers: { "User-Agent": UA } });
@@ -80,40 +128,11 @@ async function ingestMarket(market: ExchangeMarket): Promise<MarketResult> {
     if (stocks.length === 0) break; // 더 없으면 종료(방어)
 
     for (const s of stocks) {
-      const code = (s.itemCode ?? "").trim();
-      if (!code || seen.has(code)) continue;
-      seen.add(code);
-      const asof = (s.localTradedAt ?? "").slice(0, 10) || new Date().toISOString().slice(0, 10);
-
-      master.push({
-        market,
-        code,
-        name_ko: s.stockName?.trim() || null,
-        name_en: null,
-        is_etf: s.stockEndType === "etf",
-        delisted: false,
-      });
-      // 거래대금(백만원 단위 → KRW). PREOPEN/장중 미체결이면 null → 그 빈 세션 행으로
-      // 직전 정상 EOD 를 덮어쓰지 않도록 daily_screen 적재를 건너뛴다(마스터는 갱신).
-      const turnoverKrw = (() => {
-        const v = num(s.accumulatedTradingValue);
-        return v == null ? null : v * 1_000_000;
-      })();
-      if (turnoverKrw == null || turnoverKrw <= 0) continue;
-      screen.push({
-        market,
-        code,
-        asof,
-        last: num(s.closePrice),
-        change_pct: signedPct(s),
-        volume: num(s.accumulatedTradingVolume),
-        turnover: turnoverKrw,
-        rvol: null,
-        high_52w: null,
-        low_52w: null,
-        rsi14: null,
-        market_cap: num(s.marketValueRaw),
-      });
+      const parsed = parseNaverStock(market, s);
+      if (parsed == null || seen.has(parsed.master.code)) continue;
+      seen.add(parsed.master.code);
+      master.push(parsed.master);
+      if (parsed.screen != null) screen.push(parsed.screen);
     }
     page += 1;
     if (page > 500) break; // 무한루프 방어
@@ -143,7 +162,16 @@ async function main(): Promise<void> {
   console.log(`[ingest:kr] done — KR 전종목 마스터 + 당일 스냅샷 적재 완료`);
 }
 
-main().catch((err) => {
-  console.error("[ingest:kr] failed:", err);
-  process.exitCode = 1;
-});
+// 직접 실행될 때만 ingest 수행(테스트가 파싱 함수만 import 할 때는 main() 미실행).
+const isEntrypoint = (() => {
+  const arg = process.argv[1];
+  if (!arg) return false;
+  const norm = arg.replace(/\\/g, "/");
+  return import.meta.url.endsWith(norm) || import.meta.url.endsWith(norm.replace(/\.ts$/, ".js"));
+})();
+if (isEntrypoint) {
+  main().catch((err) => {
+    console.error("[ingest:kr] failed:", err);
+    process.exitCode = 1;
+  });
+}
