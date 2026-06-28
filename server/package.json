@@ -21,6 +21,7 @@
     "ingest:master:us": "tsx src/scripts/ingest-master-us.ts",
     "ingest:us:snapshot": "tsx src/scripts/ingest-us-nasdaq.ts",
     "ingest:kr": "tsx src/scripts/ingest-kr-naver.ts",
+    "backfill:history": "tsx src/scripts/backfill-history-metrics.ts",
     "backtest": "tsx src/scripts/run-backtest.ts",
     "scorecard": "tsx src/scripts/show-scorecard.ts",
     "push:digest": "tsx src/scripts/run-push-digest.ts",

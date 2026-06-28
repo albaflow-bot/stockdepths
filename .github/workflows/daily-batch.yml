@@ -57,6 +57,8 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PICKS_PRIMARY: ${{ vars.PICKS_PRIMARY }}
         run: |
+          npm run backfill:history -- --market US --limit 300
+          npm run backfill:history -- --market KR --limit 300
           npm run batch:screen -- --market US --from-snapshot
           npm run batch:screen -- --market KR --from-snapshot
       - name: Send daily push digest (US + KR)

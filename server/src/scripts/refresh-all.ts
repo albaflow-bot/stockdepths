@@ -39,6 +39,9 @@ const STEPS: Step[] = [
   { label: "US 마스터", script: "ingest-master-us.ts", args: [], critical: true },
   { label: "US 스냅샷", script: "ingest-us-nasdaq.ts", args: [], critical: true },
   { label: "KR 전종목", script: "ingest-kr-naver.ts", args: [], critical: true },
+  // 이력 지표(RVOL/RSI/52주) 백필 — 거래대금 상위만(거래폭발/돌파/과매도 카테고리용). 비critical.
+  { label: "US 이력백필", script: "backfill-history-metrics.ts", args: ["--market", "US", "--limit", "300"], critical: false },
+  { label: "KR 이력백필", script: "backfill-history-metrics.ts", args: ["--market", "KR", "--limit", "300"], critical: false },
   { label: "US 발굴", script: "run-screen-batch.ts", args: ["--market", "US", "--from-snapshot"], critical: true },
   { label: "KR 발굴", script: "run-screen-batch.ts", args: ["--market", "KR", "--from-snapshot"], critical: true },
   { label: "US 픽", script: "run-daily-batch.ts", args: ["--market", "US", "--force"], env: { PICKS_PRIMARY: "gemini" }, critical: false },
