@@ -10,3 +10,7 @@ dist/
 .env*
 # .env.example 템플릿(요구 토큰 선언, 시크릿 없음)은 추적
 !.env.example
+
+# FCM 서비스계정 비밀키 — 절대 커밋 금지
+.fcm-sa.json
+*service-account*.json

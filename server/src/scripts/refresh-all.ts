@@ -46,6 +46,8 @@ const STEPS: Step[] = [
   { label: "KR 발굴", script: "run-screen-batch.ts", args: ["--market", "KR", "--from-snapshot"], critical: true },
   { label: "US 픽", script: "run-daily-batch.ts", args: ["--market", "US", "--force"], env: { PICKS_PRIMARY: "gemini" }, critical: false },
   { label: "KR 픽", script: "run-daily-batch.ts", args: ["--market", "KR", "--force"], env: { PICKS_PRIMARY: "gemini" }, critical: false },
+  // 등록 기기에 디지스트 푸시(US+KR). FCM 미설정/0토큰이면 graceful skip. 비critical.
+  { label: "푸시 발송", script: "run-push-digest.ts", args: [], critical: false },
 ];
 
 // npm run 으로 실행 시 node_modules/.bin 이 PATH 에 있어 `tsx` 가 해석된다(Windows 는 tsx.cmd).
