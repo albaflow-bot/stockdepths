@@ -4,6 +4,14 @@ apply plugin: "com.facebook.react"
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
+// 정식 release 서명 자격(android/keystore.properties — gitignore). 없으면 디버그 서명으로
+// 폴백(빌드는 깨지지 않음 — sane default). 키스토어 파일은 반드시 백업할 것.
+def keystorePropsFile = rootProject.file("keystore.properties")
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystoreProps.load(new FileInputStream(keystorePropsFile))
+}
+
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -104,15 +112,22 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            if (keystoreProps['RELEASE_STORE_FILE']) {
+                storeFile file(keystoreProps['RELEASE_STORE_FILE'])
+                storePassword keystoreProps['RELEASE_STORE_PASSWORD']
+                keyAlias keystoreProps['RELEASE_KEY_ALIAS']
+                keyPassword keystoreProps['RELEASE_KEY_PASSWORD']
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            // 정식 키스토어(keystore.properties)가 있으면 release 서명, 없으면 디버그 폴백.
+            signingConfig keystoreProps['RELEASE_STORE_FILE'] ? signingConfigs.release : signingConfigs.debug
             shrinkResources (findProperty('android.enableShrinkResourcesInReleaseBuilds')?.toBoolean() ?: false)
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"

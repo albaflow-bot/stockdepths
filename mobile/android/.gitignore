@@ -14,3 +14,7 @@ local.properties
 
 # Bundle artifacts
 *.jsbundle
+
+# release 서명 비밀 — 커밋 금지(반드시 백업)
+keystore.properties
+app/release.keystore
