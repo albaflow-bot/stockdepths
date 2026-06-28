@@ -2,6 +2,13 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+// Firebase(FCM 원격 푸시) — google-services.json 이 있을 때만 플러그인 적용.
+// 파일이 없으면(현재) 적용 안 함 → 빌드 안 깨짐(sane default). 파일을 이 디렉터리
+// (mobile/android/app/google-services.json)에 두면 다음 빌드부터 FCM 토큰 발급이 켜진다.
+if (file("google-services.json").exists()) {
+    apply plugin: "com.google.gms.google-services"
+}
+
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
 // 정식 release 서명 자격(android/keystore.properties — gitignore). 없으면 디버그 서명으로

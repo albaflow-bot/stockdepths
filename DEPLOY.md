@@ -37,7 +37,15 @@
   빌드해야 합니다. 빌드 설정의 `EXPO_PUBLIC_API_BASE_URL` 에 그 주소를 넣고,
   화면의 **📱 결과물 빌드해서 받기** 로 APK를 받으세요.
 
-## 5) (선택) 푸시 알림 켜기
-- Firebase 무료 프로젝트 → 안드로이드 앱 등록(패키지명 `com.bindesk.stocktiming`)
-  → 서비스 계정 JSON을 위 `FCM_SERVICE_ACCOUNT_JSON` 에 넣으면 자동 푸시가 발송됩니다.
-- 없어도 앱·추천은 정상 동작하며, 자동 푸시만 비활성화됩니다.
+## 5) 푸시 알림 켜기 (원격 푸시 — v1 핵심)
+Firebase 무료 프로젝트가 필요합니다. 두 산출물을 받습니다:
+1. **google-services.json** (앱) → `mobile/android/app/google-services.json` 에 두면
+   다음 빌드부터 FCM 토큰 발급이 켜집니다(빌드는 조건부라 파일 없어도 안 깨짐).
+2. **서비스 계정 JSON** (서버) → 2·3단계의 `FCM_SERVICE_ACCOUNT_JSON` 에 넣으면
+   서버가 매일 디지스트 푸시를 발송합니다.
+
+CLI 자동화(권장): `npm i -g firebase-tools` → `firebase login`(브라우저 1회) →
+프로젝트 생성·안드로이드 앱(`com.bindesk.stocktiming`) 등록·google-services.json
+추출까지 자동. 서비스 계정 키는 콘솔 1회 다운로드(Settings → Service accounts).
+
+없어도 앱·추천·로컬 알림(보유종목 목표가/손절)은 정상 동작하며, 원격 푸시만 비활성화됩니다.

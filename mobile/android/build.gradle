@@ -18,6 +18,8 @@ buildscript {
         classpath('com.android.tools.build:gradle')
         classpath('com.facebook.react:react-native-gradle-plugin')
         classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')
+        // Firebase(FCM) — 플러그인 사용 가능하게만 등록(적용은 app 에서 조건부).
+        classpath('com.google.gms:google-services:4.4.2')
     }
 }
 
