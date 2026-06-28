@@ -8,3 +8,5 @@ dist/
 
 .vercel
 .env*
+# .env.example 템플릿(요구 토큰 선언, 시크릿 없음)은 추적
+!.env.example
