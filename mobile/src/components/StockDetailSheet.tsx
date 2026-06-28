@@ -195,7 +195,13 @@ export function StockDetailSheet({
                   {errorMessage ?? "시세를 불러오지 못했습니다."}
                 </Text>
               ) : (
-                <PriceChart closes={closes} market={group} testID={`${testID}-chart`} />
+                <PriceChart
+                  closes={closes}
+                  dates={(data?.points ?? []).map((p) => p.date)}
+                  formatValue={(v) => formatPriceByGroup(group, v)}
+                  market={group}
+                  testID={`${testID}-chart`}
+                />
               )}
             </View>
 

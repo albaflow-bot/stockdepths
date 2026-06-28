@@ -14,6 +14,13 @@ declare module "react-native" {
 
   export type StyleProp = Record<string, unknown> | Array<Record<string, unknown> | false | null | undefined>;
 
+  export interface LayoutChangeEvent {
+    nativeEvent: { layout: { x: number; y: number; width: number; height: number } };
+  }
+  export interface GestureResponderEvent {
+    nativeEvent: { locationX: number; locationY: number; pageX: number; pageY: number };
+  }
+
   export interface ViewProps {
     style?: StyleProp;
     children?: React.ReactNode;
@@ -22,6 +29,12 @@ declare module "react-native" {
     accessibilityLabel?: string;
     accessible?: boolean;
     pointerEvents?: "auto" | "none" | "box-none" | "box-only";
+    onLayout?: (e: LayoutChangeEvent) => void;
+    onStartShouldSetResponder?: () => boolean;
+    onMoveShouldSetResponder?: () => boolean;
+    onResponderGrant?: (e: GestureResponderEvent) => void;
+    onResponderMove?: (e: GestureResponderEvent) => void;
+    onResponderRelease?: (e: GestureResponderEvent) => void;
   }
   export const View: React.ComponentType<ViewProps>;
 

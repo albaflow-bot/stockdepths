@@ -22,3 +22,9 @@ export function priceChartTrend(closes: number[]): number {
   if (pts.length < 2) return 0;
   return pts[pts.length - 1]! - pts[0]!;
 }
+
+/** 스크러버 터치 x(px) → 데이터 인덱스(0..n-1 클램프). width<=0/n<=1 이면 0. */
+export function scrubIndex(x: number, width: number, n: number): number {
+  if (!(width > 0) || n <= 1) return 0;
+  return Math.min(n - 1, Math.max(0, Math.round((x / width) * (n - 1))));
+}

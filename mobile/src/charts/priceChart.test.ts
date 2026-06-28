@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { priceChartFractions, priceChartTrend } from "./priceChart";
+import { priceChartFractions, priceChartTrend, scrubIndex } from "./priceChart";
 
 describe("priceChartFractions", () => {
   it("종가를 min..max 기준 0..1 로 정규화한다", () => {
@@ -33,5 +33,22 @@ describe("priceChartTrend", () => {
   });
   it("부족 데이터는 0(보합)", () => {
     expect(priceChartTrend([5])).toBe(0);
+  });
+});
+
+describe("scrubIndex (막대 터치 → 인덱스)", () => {
+  it("터치 x 비율로 인덱스 매핑 (0..n-1)", () => {
+    // 너비 100, 10개 점(인덱스 0..9): x=0→0, x=100→9, x=50→약 중앙.
+    expect(scrubIndex(0, 100, 10)).toBe(0);
+    expect(scrubIndex(100, 100, 10)).toBe(9);
+    expect(scrubIndex(50, 100, 10)).toBe(5);
+  });
+  it("범위를 벗어난 x 는 클램프", () => {
+    expect(scrubIndex(-20, 100, 10)).toBe(0);
+    expect(scrubIndex(999, 100, 10)).toBe(9);
+  });
+  it("너비 0/단일 점은 0", () => {
+    expect(scrubIndex(50, 0, 10)).toBe(0);
+    expect(scrubIndex(50, 100, 1)).toBe(0);
   });
 });
