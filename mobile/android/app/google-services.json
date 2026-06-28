@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "359610309089",
+    "project_id": "stock-1b126",
+    "storage_bucket": "stock-1b126.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:359610309089:android:7a42b3a81517db4da31aa0",
+        "android_client_info": {
+          "package_name": "com.bindesk.stocktiming"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBW8LZDrNPbcf1n7cfcxHkDHqXUYYRuYUA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
