@@ -1,6 +1,9 @@
 # BinDesk 자동 추가 — 시크릿 유출 방지
 .env
 .env.*
+# 단, .env.example 템플릿(시크릿 없음 — 요구 토큰 선언)은 추적한다
+!.env.example
+!**/.env.example
 *.pem
 *.key
 secrets/
