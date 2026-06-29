@@ -25,6 +25,7 @@
     "backtest": "tsx src/scripts/run-backtest.ts",
     "scorecard": "tsx src/scripts/show-scorecard.ts",
     "push:digest": "tsx src/scripts/run-push-digest.ts",
+    "refresh:news": "tsx src/scripts/refresh-news.ts",
     "alerts:demo": "tsx src/scripts/alerts-demo.ts",
     "email:announce": "tsx src/scripts/send-announcement.ts",
     "api": "tsx src/scripts/run-api.ts"

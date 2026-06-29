@@ -232,13 +232,14 @@ export function DiscoveryTab({
             </Text>
           </View>
 
-          {/* 시장 속보 — 오늘 시장 맥락(왜). 검증 출처(주요 언론사)만. */}
+          {/* 시장 속보 — 실시간(Supabase Realtime) 구독. 검증 출처(주요 언론사)만. */}
           <NewsSection
             q={d.market === "KR" ? "코스피 코스닥 증시" : "US stock market"}
             market={d.market}
             title="📰 시장 속보"
-            subtitle="오늘 시장 흐름의 맥락 — 주요 언론사 기준"
+            subtitle="실시간 — 주요 언론사 기준"
             limit={6}
+            realtime
             testID={`${testID}-news`}
           />
 

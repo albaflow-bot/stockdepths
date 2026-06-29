@@ -42,6 +42,14 @@ describe("NewsSection", () => {
     expect(screen.getByTestId("news-section-webview")).toBeInTheDocument();
   });
 
+  it("realtime 이지만 Supabase 미설정이면 on-demand 로더로 폴백 렌더", async () => {
+    const loader = vi.fn(async () => SAMPLE);
+    render(<NewsSection q="코스피 증시" market="KR" title="📰 시장 속보" realtime loader={loader} />);
+    await waitFor(() => expect(screen.getByText("삼성전자 신고가 경신")).toBeInTheDocument());
+    // 구독 미연결이므로 ● LIVE 배지는 없다.
+    expect(screen.queryByTestId("news-section-live")).toBeNull();
+  });
+
   it("결과 0건 → 한 줄 안내(검증 출처 기준)", async () => {
     render(<NewsSection q="없는종목" market="KR" title="관련 뉴스" loader={async () => []} />);
     await waitFor(() => expect(screen.getByTestId("news-section-empty")).toBeInTheDocument());

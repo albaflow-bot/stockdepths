@@ -8,10 +8,11 @@
  * 뉴스는 보조 정보 → 실패/빈 결과는 한 줄 안내로 degrade(렌더 트리 깨짐 ✗).
  */
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { View, Text, Pressable, ActivityIndicator, StyleSheet } from "react-native";
 import { tokens } from "../theme/tokens";
-import { fetchNews, type NewsLoader } from "../data/newsClient";
+import { type NewsLoader } from "../data/newsClient";
+import { useNewsFeed } from "../data/useNewsFeed";
 import { NewsWebViewModal } from "./NewsWebViewModal";
 import type { NewsArticle, NewsMarket } from "../types/news";
 
@@ -25,12 +26,12 @@ export interface NewsSectionProps {
   limit?: number;
   /** 뉴스 로더(테스트 주입). 미주입 시 실제 /api/news 클라이언트. */
   loader?: NewsLoader;
-  /** 링크 열기(테스트 주입). 미주입 시 Linking.openURL. */
+  /** 링크 열기(테스트 주입). 미주입 시 앱 내부 웹뷰. */
   onOpen?: (url: string) => void;
+  /** true 면 Supabase Realtime 으로 실시간 구독(시장 속보). 미설정 시 on-demand 1회 조회. */
+  realtime?: boolean;
   testID?: string;
 }
-
-type LoadStatus = "loading" | "ready";
 
 /** ISO 시각 → 짧은 상대표기("방금"/"N시간 전"/"어제"/"M/D"). 파싱 실패 시 "". */
 export function relativeTime(iso: string, now: Date = new Date()): string {
@@ -56,36 +57,16 @@ export function NewsSection({
   limit = 8,
   loader,
   onOpen,
+  realtime,
   testID = "news-section",
 }: NewsSectionProps) {
-  const [status, setStatus] = useState<LoadStatus>("loading");
-  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const term = q.trim();
+  const { articles, status, live } = useNewsFeed({ q: term, market, limit, realtime: !!realtime, loader });
   // 내부 웹뷰로 열 기사(외부 브라우저 대신). null 이면 닫힘.
   const [openArticle, setOpenArticle] = useState<NewsArticle | null>(null);
-  const term = q.trim();
 
-  useEffect(() => {
-    if (!term) return;
-    let alive = true;
-    setStatus("loading");
-    const load = loader ?? fetchNews;
-    load({ q: term, market, limit })
-      .then((list) => {
-        if (!alive) return;
-        setArticles(list);
-        setStatus("ready");
-      })
-      .catch(() => {
-        if (!alive) return;
-        setArticles([]);
-        setStatus("ready");
-      });
-    return () => {
-      alive = false;
-    };
-  }, [term, market, limit, loader]);
-
-  if (!term) return null;
+  // realtime(시장 속보)은 q 없이도 렌더. 그 외엔 검색어 없으면 섹션 자체를 안 그린다.
+  if (!term && !realtime) return null;
 
   // 기본은 앱 내부 웹뷰로 열기(사용자 요청 — 외부 브라우저 ✗). onOpen 주입 시 그쪽 우선(테스트/오버라이드).
   const open = (a: NewsArticle) => {
@@ -95,7 +76,14 @@ export function NewsSection({
 
   return (
     <View style={styles.section} testID={testID}>
-      <Text style={styles.title}>{title}</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>{title}</Text>
+        {live ? (
+          <Text style={styles.liveBadge} testID={`${testID}-live`}>
+            ● LIVE
+          </Text>
+        ) : null}
+      </View>
       {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
 
       {status === "loading" ? (
@@ -141,7 +129,9 @@ export function NewsSection({
 
 const styles = StyleSheet.create({
   section: { gap: tokens.space.xs },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: tokens.space.sm },
   title: { fontSize: tokens.font.size.md, fontWeight: tokens.font.weight.bold, color: tokens.color.textPrimary },
+  liveBadge: { fontSize: tokens.font.size.xs, fontWeight: tokens.font.weight.bold, color: "#e11d48" },
   subtitle: { fontSize: tokens.font.size.xs, color: tokens.color.textMuted },
   center: { paddingVertical: tokens.space.lg, alignItems: "center" },
   empty: { fontSize: tokens.font.size.sm, color: tokens.color.textMuted, paddingVertical: tokens.space.sm },

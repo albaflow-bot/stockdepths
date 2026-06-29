@@ -1,0 +1,30 @@
+name: News refresh
+
+# 시장 속보(KR/US)를 Google News RSS → public.news 로 주기 적재한다. Supabase Realtime 이
+# 새 row 를 구독 중인 앱에 즉시 푸시하므로, 이 cron 주기가 '실시간'의 상한이 된다(15분).
+# 가벼운 잡(전종목 배치와 무관) — 별 워크플로로 분리.
+
+on:
+  schedule:
+    - cron: "*/15 * * * *" # every 15 minutes (Actions 스케줄은 부하 시 지연될 수 있음)
+  workflow_dispatch: {}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - name: Refresh market news (KR + US) → Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run refresh:news

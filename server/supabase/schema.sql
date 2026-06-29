@@ -176,3 +176,49 @@ create table if not exists public.discovery_artifacts (
   updated_at timestamptz not null default now(),
   primary key (market, asof)
 );
+
+-- 시장 속보 실시간 피드 (SPEC §5.3-Δ realtime). refresh-news 배치가 Google News RSS 를
+-- 신뢰 출처 게이팅해 주기적으로 upsert → 클라가 Supabase Realtime(웹소켓)으로 새 기사를
+-- 즉시 구독한다. daily_market_brief(LLM 요약)와 별개 — 이건 *기사 원문 링크* 피드.
+-- link UNIQUE 로 디둡(같은 기사 재적재 방지). 시장(KR/US) 단위 — 종목별은 on-demand 유지.
+create table if not exists public.news (
+  id           bigint generated always as identity primary key,
+  market       text        not null,              -- 'KR'|'US'
+  title        text        not null,
+  source       text        not null,
+  link         text        not null unique,
+  published_at timestamptz,
+  created_at   timestamptz not null default now()
+);
+create index if not exists news_market_published_idx
+  on public.news (market, published_at desc nulls last);
+
+-- 클라이언트(anon)가 Realtime 으로 직접 구독하는 유일 테이블 → RLS + 공개 read 정책.
+-- (다른 테이블은 service_role 서버 전용이라 RLS 미사용.) 쓰기는 service_role(배치)만 가능.
+alter table public.news enable row level security;
+drop policy if exists news_anon_read on public.news;
+create policy news_anon_read on public.news for select to anon, authenticated using (true);
+
+-- Realtime publication 등재(중복/부재는 무시).
+do $$
+begin
+  alter publication supabase_realtime add table public.news;
+exception
+  when duplicate_object then null;
+  when undefined_object then null;
+end $$;
+
+-- ── 보안: anon 공개키 노출 대비 RLS 하드닝 (Realtime news 도입에 anon 키가 클라에 실림) ──
+-- 클라가 anon 으로 직접 접근하는 테이블은 news(공개 read) 뿐. 나머지는 RLS 켜서 anon/
+-- authenticated 전면 차단(정책 없음). 서버는 service_role 키라 RLS 를 우회 → 영향 없음.
+alter table public.daily_picks_artifacts enable row level security;
+alter table public.track_record         enable row level security;
+alter table public.timing_signal        enable row level security;
+alter table public.daily_market_brief   enable row level security;
+alter table public.device_tokens        enable row level security;  -- 푸시 토큰 — 공개 ✗
+alter table public.security_master      enable row level security;
+alter table public.daily_screen         enable row level security;
+alter table public.weekly_series        enable row level security;
+alter table public.discovery_artifacts  enable row level security;
+-- 뷰는 RLS 대상이 아니므로 anon/authenticated SELECT 권한 자체를 회수(서버 service_role 유지).
+revoke all on public.security_search_v from anon, authenticated;
