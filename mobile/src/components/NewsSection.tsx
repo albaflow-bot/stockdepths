@@ -9,9 +9,10 @@
  */
 
 import { useEffect, useState } from "react";
-import { View, Text, Pressable, ActivityIndicator, Linking, StyleSheet } from "react-native";
+import { View, Text, Pressable, ActivityIndicator, StyleSheet } from "react-native";
 import { tokens } from "../theme/tokens";
 import { fetchNews, type NewsLoader } from "../data/newsClient";
+import { NewsWebViewModal } from "./NewsWebViewModal";
 import type { NewsArticle, NewsMarket } from "../types/news";
 
 export interface NewsSectionProps {
@@ -59,6 +60,8 @@ export function NewsSection({
 }: NewsSectionProps) {
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [articles, setArticles] = useState<NewsArticle[]>([]);
+  // 내부 웹뷰로 열 기사(외부 브라우저 대신). null 이면 닫힘.
+  const [openArticle, setOpenArticle] = useState<NewsArticle | null>(null);
   const term = q.trim();
 
   useEffect(() => {
@@ -84,9 +87,10 @@ export function NewsSection({
 
   if (!term) return null;
 
-  const open = (url: string) => {
-    if (onOpen) return onOpen(url);
-    void Linking.openURL(url);
+  // 기본은 앱 내부 웹뷰로 열기(사용자 요청 — 외부 브라우저 ✗). onOpen 주입 시 그쪽 우선(테스트/오버라이드).
+  const open = (a: NewsArticle) => {
+    if (onOpen) return onOpen(a.link);
+    setOpenArticle(a);
   };
 
   return (
@@ -110,7 +114,7 @@ export function NewsSection({
               key={`${a.link}-${i}`}
               accessibilityRole="link"
               accessibilityLabel={`${a.title} — ${a.source} 기사 열기`}
-              onPress={() => open(a.link)}
+              onPress={() => open(a)}
               style={styles.row}
               testID={`${testID}-item-${i}`}
             >
@@ -122,6 +126,15 @@ export function NewsSection({
           );
         })
       )}
+
+      {/* 앱 내부 웹뷰 — 기사 원문(상단 ‹ 뒤로). 외부 브라우저 대신. */}
+      <NewsWebViewModal
+        visible={openArticle != null}
+        url={openArticle?.link ?? null}
+        title={openArticle?.source}
+        onClose={() => setOpenArticle(null)}
+        testID={`${testID}-webview`}
+      />
     </View>
   );
 }

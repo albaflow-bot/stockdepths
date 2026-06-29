@@ -34,6 +34,14 @@ describe("NewsSection", () => {
     expect(onOpen).toHaveBeenCalledWith("https://n.example/1");
   });
 
+  it("onOpen 미주입 시 탭하면 앱 내부 웹뷰가 열린다(외부 브라우저 ✗)", async () => {
+    render(<NewsSection q="삼성전자" market="KR" title="관련 뉴스" loader={async () => SAMPLE} />);
+    await waitFor(() => expect(screen.getByTestId("news-section-item-0")).toBeInTheDocument());
+    expect(screen.queryByTestId("news-section-webview")).toBeNull();
+    fireEvent.click(screen.getByTestId("news-section-item-0"));
+    expect(screen.getByTestId("news-section-webview")).toBeInTheDocument();
+  });
+
   it("결과 0건 → 한 줄 안내(검증 출처 기준)", async () => {
     render(<NewsSection q="없는종목" market="KR" title="관련 뉴스" loader={async () => []} />);
     await waitFor(() => expect(screen.getByTestId("news-section-empty")).toBeInTheDocument());
