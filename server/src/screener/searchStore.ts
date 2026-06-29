@@ -105,6 +105,7 @@ export class InMemorySecuritySearchStore implements SecuritySearchProvider {
       direction: directionOf(screen?.change_pct),
       weekly,
       signal: deriveSignal(screen),
+      asof: screen?.asof ?? null,
     };
   }
 

@@ -75,6 +75,8 @@ export interface SecuritySearchItem {
   weekly: number[];
   /** 타이밍 한 줄 신호(있으면) — 없으면 null. */
   signal: SecuritySignal | null;
+  /** 이 종목 스냅샷 기준일(YYYY-MM-DD). last/change_pct 가 어느 거래일 값인지. 없으면 null. */
+  asof?: string | null;
 }
 
 /** 정규화된 검색 질의. */

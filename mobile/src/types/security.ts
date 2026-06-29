@@ -31,6 +31,8 @@ export interface SecuritySearchItem {
   weekly: number[];
   /** 타이밍 한 줄 신호(있으면). 없으면 null. */
   signal: SecuritySignal | null;
+  /** 이 종목 스냅샷 기준일(YYYY-MM-DD). 등락률이 어느 거래일 값인지. 없으면 null. */
+  asof?: string | null;
 }
 
 /** 결과 정렬 기준 (클라 토글). */

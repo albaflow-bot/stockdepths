@@ -34,6 +34,18 @@ export function fmtPct(v: number | null | undefined): string {
   return `${v.toFixed(2)}%`;
 }
 
+/**
+ * 스냅샷 기준일(YYYY-MM-DD) → 짧은 라벨. 기기 로컬 오늘이면 "오늘", 아니면 "M/D"(예: 6/28).
+ * asof 없으면 "" 반환 — 등락률에 날짜를 안 붙여 'stale 을 오늘로' 오인시키지 않는다.
+ */
+export function fmtAsofLabel(asof: string | null | undefined): string {
+  if (!asof || !/^\d{4}-\d{2}-\d{2}/.test(asof)) return "";
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  if (asof.slice(0, 10) === today) return "오늘";
+  return `${Number(asof.slice(5, 7))}/${Number(asof.slice(8, 10))}`;
+}
+
 /** Tone for a return number: positive → green, negative → red, zero → muted. */
 export function returnTone(v: number | null | undefined): BadgeTone {
   if (v == null || !Number.isFinite(v) || v === 0) return "muted";

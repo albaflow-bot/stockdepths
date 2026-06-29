@@ -13,7 +13,7 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import { tokens } from "../theme/tokens";
 import { Sparkline } from "./Sparkline";
 import { marketDirectionColor, changeArrow } from "./marketColors";
-import { fmtSignedPct } from "../formatters";
+import { fmtSignedPct, fmtAsofLabel } from "../formatters";
 import {
   displayName,
   isKrMarket,
@@ -59,6 +59,7 @@ export function SecuritySearchCard({
   const color = marketDirectionColor(item.market, item.direction);
   const arrow = changeArrow(item.direction);
   const hasSignal = !!item.signal && !!item.signal.label?.trim() && !!item.signal.reason?.trim();
+  const asofLabel = fmtAsofLabel(item.asof);
 
   // 본문(헤더~신호)만 탭 영역으로 감싼다. ＋관심/＋보유 버튼은 바깥에 둬서
   // 이벤트 전파 없이 기존 동작을 유지한다(무회귀).
@@ -77,7 +78,7 @@ export function SecuritySearchCard({
       <View style={styles.priceRow}>
         <Text style={styles.price}>{formatPrice(item)}</Text>
         <Text style={[styles.change, { color }]} testID={`${tid}-change`}>
-          {arrow} {fmtSignedPct(item.change_pct)} (오늘)
+          {arrow} {fmtSignedPct(item.change_pct)}{asofLabel ? ` (${asofLabel})` : ""}
         </Text>
       </View>
 

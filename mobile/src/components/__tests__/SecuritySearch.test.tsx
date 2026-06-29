@@ -4,6 +4,11 @@ import { SecuritySearch } from "../SecuritySearch";
 import { SecuritySearchCard, formatPrice } from "../SecuritySearchCard";
 import type { SecuritySearchItem } from "../../types/security";
 
+const TODAY = (() => {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+})();
+
 function item(over: Partial<SecuritySearchItem> = {}): SecuritySearchItem {
   return {
     market: "KOSPI",
@@ -15,6 +20,7 @@ function item(over: Partial<SecuritySearchItem> = {}): SecuritySearchItem {
     direction: "up",
     weekly: [76000, 77000, 78000, 78100, 78200, 78300, 78400],
     signal: { label: "매수 적정", reason: "5일선 회복" },
+    asof: TODAY,
     ...over,
   };
 }
@@ -109,6 +115,13 @@ describe("SecuritySearchCard 표시", () => {
     expect(screen.getByText("78,400원")).toBeInTheDocument();
     expect(screen.getByText(/▲ \+1.60% \(오늘\)/)).toBeInTheDocument();
     expect(screen.getByText(/한 줄 신호: 매수 적정/)).toBeInTheDocument();
+  });
+
+  it("스냅샷이 묵은 날짜면 '(오늘)' 대신 그 날짜(M/D)를 표기", () => {
+    const stale = item({ asof: "2026-06-26" });
+    render(<SecuritySearchCard item={stale} watched={false} held={false} onAddWatch={() => {}} onAddHolding={() => {}} />);
+    expect(screen.getByText(/▲ \+1.60% \(6\/26\)/)).toBeInTheDocument();
+    expect(screen.queryByText(/\(오늘\)/)).toBeNull();
   });
 
   it("근거 없는 신호(null)는 렌더하지 않음", () => {

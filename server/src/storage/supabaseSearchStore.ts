@@ -32,6 +32,7 @@ interface SearchRow {
   high_52w: number | null;
   weekly: number[] | null;
   is_etf: boolean | null;
+  asof: string | null;
 }
 
 /** PostgREST 값에 들어갈 사용자 입력을 안전화: 와일드카드/구분자 문자를 제거. */
@@ -121,7 +122,7 @@ export class SupabaseSecuritySearchStore implements SecuritySearchProvider {
     // DB 단계에서 잘려 못 올라온다. 넉넉히 받아 재정렬 후 slice 한다(PostgREST 최대 100 가드).
     const fetchLimit = Math.min(100, Math.max(limit, limit * 4));
     const qs = [
-      "select=market,code,name_ko,name_en,last,change_pct,rvol,rsi14,high_52w,weekly,is_etf",
+      "select=market,code,name_ko,name_en,last,change_pct,rvol,rsi14,high_52w,weekly,is_etf,asof",
       or,
       marketFilter,
       "delisted=eq.0",
@@ -157,6 +158,7 @@ export class SupabaseSecuritySearchStore implements SecuritySearchProvider {
         rsi14: r.rsi14,
         high_52w: r.high_52w,
       }),
+      asof: r.asof ?? null,
     }));
   }
 }
