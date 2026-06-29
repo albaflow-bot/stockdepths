@@ -95,6 +95,9 @@ export function PriceChart({ closes, market, height = 140, dates, formatValue, t
         {fractions.map((f, i) => (
           <View
             key={i}
+            // 막대가 터치를 가로채면 부모(row)의 좌우 스크럽이 깨지고 locationX 가 막대 기준
+            // (작은 값)으로 들어와 오작동한다 → 터치는 항상 row 가 받도록 막대는 비터치.
+            pointerEvents="none"
             style={[
               styles.bar,
               {
