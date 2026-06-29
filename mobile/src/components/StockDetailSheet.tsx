@@ -144,7 +144,11 @@ export function StockDetailSheet({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} testID={`${testID}-backdrop`}>
         <Pressable style={styles.sheet} onPress={() => {}} testID={testID}>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollBody}>
+          <ScrollView
+            style={styles.scroll}
+            showsVerticalScrollIndicator
+            contentContainerStyle={styles.scrollBody}
+          >
             {/* 헤더: 종목명 · 코드 · 시장 */}
             <View style={styles.headerRow}>
               <Text style={styles.name} numberOfLines={1}>
@@ -300,6 +304,9 @@ const styles = StyleSheet.create({
     maxHeight: "90%",
     gap: tokens.space.sm,
   },
+  // RN 은 flex 자식 기본 flexShrink=0 → ScrollView 가 콘텐츠만큼 커져 시트(maxHeight 90%)를
+  // 넘어가 잘리고 스크롤이 안 됐다. flexShrink:1 로 시트 안에서 줄어들며 스크롤되게 한다.
+  scroll: { flexShrink: 1 },
   scrollBody: { gap: tokens.space.md },
 
   headerRow: { flexDirection: "row", alignItems: "baseline", gap: tokens.space.xs, flexWrap: "wrap" },
