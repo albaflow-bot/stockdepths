@@ -112,9 +112,10 @@ describe("DiscoveryTab (6 카테고리 섹션)", () => {
     const loader = vi.fn(async (m: "US" | "KR") => artifact(m));
     render(<DiscoveryTab loader={loader} onAddWatch={() => {}} onAddHolding={() => {}} />);
     await waitFor(() => expect(screen.getByTestId("discovery-tab-sections")).toBeInTheDocument());
-    fireEvent.click(screen.getByTestId("discovery-tab-market-KR"));
-    await waitFor(() => expect(loader).toHaveBeenCalledWith("KR"));
-    expect(screen.getByTestId("discovery-card-gainers-005930")).toBeInTheDocument();
+    // 기본은 한국 → 미국으로 토글하면 미국 재조회.
+    fireEvent.click(screen.getByTestId("discovery-tab-market-US"));
+    await waitFor(() => expect(loader).toHaveBeenCalledWith("US"));
+    expect(screen.getByTestId("discovery-card-gainers-MOVR")).toBeInTheDocument();
   });
 
   it("＋관심 클릭 → 콜백에 해당 종목 전달", async () => {
@@ -123,6 +124,15 @@ describe("DiscoveryTab (6 카테고리 섹션)", () => {
     await waitFor(() => expect(screen.getByTestId("discovery-card-gainers-MOVR")).toBeInTheDocument());
     fireEvent.click(screen.getByTestId("discovery-card-gainers-MOVR-watch"));
     expect(onAddWatch).toHaveBeenCalledWith(expect.objectContaining({ code: "MOVR" }));
+  });
+
+  it("발굴 카드 탭 → 상세에 종목 설명(카테고리·선정 기준) 표시", async () => {
+    render(<DiscoveryTab loader={async () => artifact("US")} onAddWatch={() => {}} onAddHolding={() => {}} />);
+    await waitFor(() => expect(screen.getByTestId("discovery-card-gainers-MOVR")).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId("discovery-card-gainers-MOVR-body"));
+    const desc = await screen.findByTestId("discovery-tab-detail-description");
+    expect(desc.textContent).toMatch(/급등/);
+    expect(desc.textContent).toMatch(/선정 기준/);
   });
 
   it("미생성/오류 → 메시지 + 다시 시도", async () => {
@@ -205,10 +215,11 @@ describe("DiscoveryTab — 오늘의 추천(LLM 픽) 섹션", () => {
         onAddHolding={() => {}}
       />,
     );
-    await waitFor(() => expect(screen.getByTestId("discovery-tab-picks-card-NVDA")).toBeInTheDocument());
-    fireEvent.click(screen.getByTestId("discovery-tab-market-KR"));
-    await waitFor(() => expect(picksLoader).toHaveBeenCalledWith("KR"));
-    expect(screen.getByTestId("discovery-tab-picks-card-005930")).toBeInTheDocument();
+    // 기본은 한국(005930) → 미국으로 토글하면 픽도 미국(NVDA) 재조회.
+    await waitFor(() => expect(screen.getByTestId("discovery-tab-picks-card-005930")).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId("discovery-tab-market-US"));
+    await waitFor(() => expect(picksLoader).toHaveBeenCalledWith("US"));
+    expect(screen.getByTestId("discovery-tab-picks-card-NVDA")).toBeInTheDocument();
   });
 
   it("픽 로드 실패해도 카테고리 섹션은 그대로 보인다", async () => {

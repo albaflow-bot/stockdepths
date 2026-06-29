@@ -28,6 +28,7 @@ import {
   type ScreenCategory,
 } from "../types/discovery";
 import type { SecuritySearchItem } from "../types/security";
+import { fmtSignedPct } from "../formatters";
 
 export interface DiscoveryTabProps {
   loader?: DiscoveryLoader;
@@ -52,6 +53,22 @@ const MARKETS: Array<{ value: DiscoveryMarket; label: string }> = [
 /** 시장 키워드 — 시장 속보 검색어. */
 function marketNewsQuery(m: DiscoveryMarket): string {
   return m === "KR" ? "코스피 코스닥 증시" : "US stock market";
+}
+
+/**
+ * 발굴 종목 설명 — 상세 시트 '설명'란용. 픽(LLM rationale)과 달리 발굴 종목은 결정론
+ * 스캔이라, 카테고리 의미 + 핵심 지표(등락률/RVOL/RSI) + 신호 근거 + 선정 기준을 조합해
+ * "왜 이 카테고리에 떴는지"를 사용자가 알 수 있게 한다.
+ */
+function discoveryDescription(d: DiscoveryItem): string {
+  const meta = CATEGORY_META[d.category];
+  const metrics: string[] = [];
+  if (d.change_pct != null && Number.isFinite(d.change_pct)) metrics.push(`오늘 ${fmtSignedPct(d.change_pct)}`);
+  if (d.rvol != null && Number.isFinite(d.rvol)) metrics.push(`거래량 ${d.rvol.toFixed(1)}배(RVOL)`);
+  if (d.rsi14 != null && Number.isFinite(d.rsi14)) metrics.push(`RSI ${Math.round(d.rsi14)}`);
+  const head = `${meta.label}${metrics.length ? " · " + metrics.join(" · ") : ""}`;
+  const reason = d.signal?.reason?.trim();
+  return [head, reason || null, `선정 기준: ${meta.description}`].filter(Boolean).join("\n");
 }
 
 /** DiscoveryItem → 카드가 받는 SecuritySearchItem (검색 화면과 동일 레이아웃). */
@@ -95,7 +112,7 @@ function CategorySection({
   market: DiscoveryArtifact["market"];
   onAddWatch: (item: SecuritySearchItem) => void;
   onAddHolding: (item: SecuritySearchItem) => void;
-  onPressItem: (item: SecuritySearchItem) => void;
+  onPressItem: (d: DiscoveryItem) => void;
   watched: Set<string>;
   held: Set<string>;
 }) {
@@ -119,7 +136,7 @@ function CategorySection({
             held={held.has(d.code.toUpperCase())}
             onAddWatch={onAddWatch}
             onAddHolding={onAddHolding}
-            onPress={onPressItem}
+            onPress={() => onPressItem(d)}
             badgeText={d.unusual ? "이례신호 초대형주" : undefined}
             testID={`discovery-card-${category}-${d.code}`}
           />
@@ -150,17 +167,18 @@ export function DiscoveryTab({
   const [view, setView] = useState<"discovery" | "news">("discovery");
   const [newsMarket, setNewsMarket] = useState<DiscoveryMarket>("KR");
 
-  // 발굴 카드(검색형) 탭 → 상세. last/change/신호를 그대로 넘긴다.
-  const openItem = (item: SecuritySearchItem) =>
+  // 발굴 카드 탭 → 상세. 원본 DiscoveryItem 으로 설명까지 채운다(카테고리·지표 보존).
+  const openItem = (dItem: DiscoveryItem) =>
     setDetail({
-      item,
+      item: toSearchItem(dItem),
       target: {
-        symbol: item.code,
-        market: item.market,
-        name: item.name_ko?.trim() || item.name_en?.trim() || item.code,
-        last: item.last,
-        changePct: item.change_pct,
-        signal: item.signal,
+        symbol: dItem.code,
+        market: dItem.market,
+        name: dItem.name_ko?.trim() || dItem.name_en?.trim() || dItem.code,
+        last: dItem.last,
+        changePct: dItem.change_pct,
+        signal: dItem.signal,
+        description: discoveryDescription(dItem),
       },
     });
 
