@@ -35,6 +35,8 @@ declare module "react-native" {
     onResponderGrant?: (e: GestureResponderEvent) => void;
     onResponderMove?: (e: GestureResponderEvent) => void;
     onResponderRelease?: (e: GestureResponderEvent) => void;
+    onResponderTerminationRequest?: () => boolean;
+    onResponderTerminate?: (e: GestureResponderEvent) => void;
   }
   export const View: React.ComponentType<ViewProps>;
 

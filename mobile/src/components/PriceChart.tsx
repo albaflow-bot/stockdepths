@@ -87,6 +87,10 @@ export function PriceChart({ closes, market, height = 140, dates, formatValue, t
         onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
         onStartShouldSetResponder={() => interactive}
         onMoveShouldSetResponder={() => interactive}
+        // 부모가 세로 ScrollView(StockDetailSheet) 라 스크럽 드래그에 세로 성분이 조금만 섞여도
+        // ScrollView 가 responder 를 가로채(termination) 스크럽이 중간에 끊겼다. 한 번 잡으면
+        // 손을 뗄 때까지 넘겨주지 않아, 막대 위/공백 어디서 시작하든 좌우 스크럽이 안 끊긴다.
+        onResponderTerminationRequest={() => false}
         onResponderGrant={pick}
         onResponderMove={pick}
       >
