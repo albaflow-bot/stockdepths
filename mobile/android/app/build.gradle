@@ -108,9 +108,10 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "0.1.0"
-        // 32비트 ARM(armeabi-v7a)을 포함해 구형·저가폰까지 설치 가능하게 한다.
-        // (이전엔 arm64-v8a/x86_64 만이라 armeabi-v7a 전용 기기에서 '설치되지 않음' 발생.)
-        ndk { abiFilters "armeabi-v7a", "arm64-v8a", "x86_64" }
+        // arm64-v8a(실기기 전부, 2015~) + x86_64(에뮬레이터)만 빌드한다. 32비트 armeabi-v7a 는
+        // 네이티브 prefab 빌드(CXX1210)가 깨지기 쉽고 현행 기기엔 불필요 — 이전의 '설치 안 됨'은
+        // ABI 가 아니라 다운로드/MIME(카톡 인앱브라우저) 문제였고 /download 로 별도 해결됨.
+        ndk { abiFilters "arm64-v8a", "x86_64" }
     }
     signingConfigs {
         debug {
