@@ -17,6 +17,13 @@ describe("NewsWebViewModal", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it("우측 상단 ✕ → 히스토리 무시하고 즉시 onClose(한 번에 닫기)", () => {
+    const onClose = vi.fn();
+    render(<NewsWebViewModal visible url="https://n.example/deep" onClose={onClose} />);
+    fireEvent.click(screen.getByTestId("news-webview-close"));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it("url 이 null 이면 아무것도 렌더하지 않음", () => {
     const { container } = render(<NewsWebViewModal visible url={null} onClose={() => {}} />);
     expect(container.textContent).toBe("");

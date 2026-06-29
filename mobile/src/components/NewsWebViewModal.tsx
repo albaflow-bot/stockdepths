@@ -59,6 +59,16 @@ export function NewsWebViewModal({ visible, url, title, onClose, testID = "news-
           >
             <Text style={styles.extText}>⤴</Text>
           </Pressable>
+          {/* 한 번에 모달 닫기 — 기사 내 링크를 깊이 타도 히스토리 무시하고 즉시 종료. */}
+          <Pressable
+            onPress={onClose}
+            style={styles.closeBtn}
+            accessibilityRole="button"
+            accessibilityLabel="닫기"
+            testID={`${testID}-close`}
+          >
+            <Text style={styles.closeText}>✕</Text>
+          </Pressable>
         </View>
 
         <View style={styles.body}>
@@ -99,6 +109,8 @@ const styles = StyleSheet.create({
   title: { flex: 1, fontSize: tokens.font.size.sm, fontWeight: tokens.font.weight.medium, color: tokens.color.textSecondary },
   extBtn: { paddingHorizontal: tokens.space.sm, paddingVertical: 4 },
   extText: { fontSize: tokens.font.size.lg, color: tokens.color.textSecondary },
+  closeBtn: { paddingLeft: tokens.space.sm, paddingVertical: 4 },
+  closeText: { fontSize: tokens.font.size.lg, fontWeight: tokens.font.weight.bold, color: tokens.color.textPrimary },
   body: { flex: 1 },
   loading: {
     position: "absolute",
