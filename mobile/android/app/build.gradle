@@ -95,6 +95,12 @@ def enableProguardInReleaseBuilds = (findProperty('android.enableProguardInRelea
  */
 def jscFlavor = 'org.webkit:android-jsc:+'
 
+// 빌드 시각 기반 versionCode(2020-01-01 이후 '분' 단위 — 단조 증가, int 범위 내).
+// 주의: `versionCode (int)(...)` 처럼 command-expression 인자 위치에 (int) 캐스트를 두면
+// Groovy 파서가 이를 캐스트로 보지 않고 null 을 넘겨 'Value is null' 평가 오류가 난다.
+// 캐스트는 반드시 def 대입(캐스트가 명확한 위치)에서 수행하고, versionCode 에는 변수만 넘긴다.
+def buildTimeVersionCode = (int) ((System.currentTimeMillis() - 1577836800000L) / 60000L)
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
@@ -106,10 +112,9 @@ android {
         applicationId 'com.bindesk.stocktiming'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // 빌드 시각 기반 versionCode(2020-01-01 이후 '분' 단위 — 단조 증가, int 범위 내).
         // 고정값(1)이면 안드로이드가 같은 버전으로 보고 새 APK 갱신을 거부한다('수정했는데
-        // 안 바뀜'의 원인). 매 빌드마다 커지게 해 정상 업데이트되도록 한다.
-        versionCode (int)((System.currentTimeMillis() - 1577836800000L) / 60000L)
+        // 안 바뀜'의 원인). 빌드 시각 기반(위 buildTimeVersionCode)으로 매 빌드마다 커지게 한다.
+        versionCode buildTimeVersionCode
         versionName "0.1.0"
         // arm64-v8a(실기기 전부, 2015~) + x86_64(에뮬레이터)만 빌드한다. 32비트 armeabi-v7a 는
         // 네이티브 prefab 빌드(CXX1210)가 깨지기 쉽고 현행 기기엔 불필요 — 이전의 '설치 안 됨'은
