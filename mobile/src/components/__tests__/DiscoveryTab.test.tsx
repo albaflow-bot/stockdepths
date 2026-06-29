@@ -97,6 +97,17 @@ describe("DiscoveryTab (6 카테고리 섹션)", () => {
     expect(losers.textContent).toMatch(/해당 종목이 없습니다/);
   });
 
+  it("📰 속보 탭 → 발굴 숨기고 속보 뷰(한·미 토글) 표시", async () => {
+    render(<DiscoveryTab loader={async () => artifact("US")} onAddWatch={() => {}} onAddHolding={() => {}} />);
+    await waitFor(() => expect(screen.getByTestId("discovery-tab-sections")).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId("discovery-tab-tab-news"));
+    expect(screen.getByTestId("discovery-tab-news-view")).toBeInTheDocument();
+    expect(screen.getByTestId("discovery-tab-news-market-KR")).toBeInTheDocument();
+    expect(screen.getByTestId("discovery-tab-news-market-US")).toBeInTheDocument();
+    // 발굴 섹션은 더 이상 안 보인다.
+    expect(screen.queryByTestId("discovery-tab-sections")).toBeNull();
+  });
+
   it("시장 토글 → 다른 시장 재조회", async () => {
     const loader = vi.fn(async (m: "US" | "KR") => artifact(m));
     render(<DiscoveryTab loader={loader} onAddWatch={() => {}} onAddHolding={() => {}} />);

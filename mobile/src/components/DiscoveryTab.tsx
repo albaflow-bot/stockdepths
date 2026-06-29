@@ -45,9 +45,14 @@ export interface DiscoveryTabProps {
 }
 
 const MARKETS: Array<{ value: DiscoveryMarket; label: string }> = [
-  { value: "US", label: "미국" },
   { value: "KR", label: "한국" },
+  { value: "US", label: "미국" },
 ];
+
+/** 시장 키워드 — 시장 속보 검색어. */
+function marketNewsQuery(m: DiscoveryMarket): string {
+  return m === "KR" ? "코스피 코스닥 증시" : "US stock market";
+}
 
 /** DiscoveryItem → 카드가 받는 SecuritySearchItem (검색 화면과 동일 레이아웃). */
 function toSearchItem(d: DiscoveryItem): SecuritySearchItem {
@@ -141,6 +146,9 @@ export function DiscoveryTab({
   // 상세 모달 대상. 발굴 카드는 원본 SecuritySearchItem 을 보존해 ＋관심/＋보유가 기존
   // 경로(full item)를 그대로 호출하게 한다. 픽 카드는 item 없이 target 만 채운다.
   const [detail, setDetail] = useState<{ item: SecuritySearchItem | null; target: StockDetailTarget } | null>(null);
+  // 상단 탭: 발굴(한국/미국) ↔ 속보. 속보는 자체 시장 토글(newsMarket)을 가진 독립 뷰.
+  const [view, setView] = useState<"discovery" | "news">("discovery");
+  const [newsMarket, setNewsMarket] = useState<DiscoveryMarket>("KR");
 
   // 발굴 카드(검색형) 탭 → 상세. last/change/신호를 그대로 넘긴다.
   const openItem = (item: SecuritySearchItem) =>
@@ -158,16 +166,19 @@ export function DiscoveryTab({
 
   return (
     <View style={styles.container} testID={testID}>
-      {/* 시장 토글 */}
-      <View style={styles.marketRow} testID={`${testID}-market`}>
+      {/* 상단 탭: 한국 · 미국 · 속보 */}
+      <View style={styles.marketRow} testID={`${testID}-tabs`}>
         {MARKETS.map((m) => {
-          const on = m.value === d.market;
+          const on = view === "discovery" && m.value === d.market;
           return (
             <Pressable
               key={m.value}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
-              onPress={() => d.setMarket(m.value)}
+              onPress={() => {
+                setView("discovery");
+                d.setMarket(m.value);
+              }}
               style={[styles.pill, on ? styles.pillOn : null]}
               testID={`${testID}-market-${m.value}`}
             >
@@ -175,16 +186,25 @@ export function DiscoveryTab({
             </Pressable>
           );
         })}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ selected: view === "news" }}
+          onPress={() => setView("news")}
+          style={[styles.pill, view === "news" ? styles.pillOn : null]}
+          testID={`${testID}-tab-news`}
+        >
+          <Text style={[styles.pillText, view === "news" ? styles.pillTextOn : null]}>📰 속보</Text>
+        </Pressable>
       </View>
 
-      {d.status === "loading" ? (
+      {view === "discovery" && d.status === "loading" ? (
         <View style={styles.center} testID={`${testID}-loading`}>
           <ActivityIndicator color={tokens.color.primary} />
           <Text style={styles.muted}>투데이를 불러오는 중…</Text>
         </View>
       ) : null}
 
-      {d.status === "error" ? (
+      {view === "discovery" && d.status === "error" ? (
         <View style={styles.center} testID={`${testID}-error`}>
           <Text style={styles.errTitle}>{d.errorMessage ?? "불러오지 못했습니다."}</Text>
           <Pressable onPress={d.reload} style={styles.retry} testID={`${testID}-retry`}>
@@ -193,7 +213,7 @@ export function DiscoveryTab({
         </View>
       ) : null}
 
-      {d.status === "ready" && d.artifact ? (
+      {view === "discovery" && d.status === "ready" && d.artifact ? (
         <ScrollView style={styles.list} testID={`${testID}-sections`}>
           {onAddPickWatch ? (
             <TodaysPicksSection
@@ -232,17 +252,6 @@ export function DiscoveryTab({
             </Text>
           </View>
 
-          {/* 시장 속보 — 실시간(Supabase Realtime) 구독. 검증 출처(주요 언론사)만. */}
-          <NewsSection
-            q={d.market === "KR" ? "코스피 코스닥 증시" : "US stock market"}
-            market={d.market}
-            title="📰 시장 속보"
-            subtitle="실시간 — 주요 언론사 기준"
-            limit={6}
-            realtime
-            testID={`${testID}-news`}
-          />
-
           {CATEGORY_ORDER.map((cat) => (
             <CategorySection
               key={cat}
@@ -257,6 +266,40 @@ export function DiscoveryTab({
             />
           ))}
         </ScrollView>
+      ) : null}
+
+      {/* 속보 뷰 — 자체 시장 토글(한·미) + 실시간 시장 속보 */}
+      {view === "news" ? (
+        <View style={styles.list} testID={`${testID}-news-view`}>
+          <View style={[styles.marketRow, styles.newsMarketRow]} testID={`${testID}-news-market`}>
+            {MARKETS.map((m) => {
+              const on = m.value === newsMarket;
+              return (
+                <Pressable
+                  key={m.value}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: on }}
+                  onPress={() => setNewsMarket(m.value)}
+                  style={[styles.pill, on ? styles.pillOn : null]}
+                  testID={`${testID}-news-market-${m.value}`}
+                >
+                  <Text style={[styles.pillText, on ? styles.pillTextOn : null]}>{m.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <ScrollView style={styles.list} testID={`${testID}-news-scroll`}>
+            <NewsSection
+              q={marketNewsQuery(newsMarket)}
+              market={newsMarket}
+              title="📰 시장 속보"
+              subtitle="실시간 — 주요 언론사 기준"
+              limit={12}
+              realtime
+              testID={`${testID}-news`}
+            />
+          </ScrollView>
+        </View>
       ) : null}
 
       {/* 카드/픽 탭 → 종목 상세 모달 */}
@@ -285,6 +328,7 @@ export function DiscoveryTab({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: tokens.color.bg, padding: tokens.space.md, gap: tokens.space.md },
   marketRow: { flexDirection: "row", gap: tokens.space.sm },
+  newsMarketRow: { marginBottom: tokens.space.md },
   pill: {
     paddingVertical: tokens.space.xs,
     paddingHorizontal: tokens.space.lg,
