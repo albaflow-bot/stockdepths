@@ -9,6 +9,7 @@
  */
 
 import { getMarketRegistry, KrMarketAdapter } from "../market/index.js";
+import { fetchNews } from "../news/googleNews.js";
 import type { Market, MarketSourceAdapter, Quote } from "../market/types.js";
 import { ArtifactStore } from "../pipeline/artifactStore.js";
 import { ScorecardService } from "../track/scorecard.js";
@@ -242,6 +243,28 @@ export async function handleTimingAccuracy(
   return { status: 200, body: accuracy };
 }
 
+/**
+ * GET /api/news?q=삼성전자&market=KR&limit=8 — 종목/시장 뉴스(SPEC §5.3 보조 입력).
+ * Google News RSS 검색을 신뢰 언론사 화이트리스트로 게이팅. 본문 ✗ 헤드라인+출처+링크만.
+ * 실패는 빈 목록(화면을 막지 않음 — 뉴스는 보조).
+ */
+export async function handleNews(
+  query: Record<string, string>,
+  _deps: ApiDeps,
+): Promise<ApiResponse> {
+  const q = (query["q"] ?? "").trim();
+  const market = (query["market"]?.toUpperCase() === "KR" ? "KR" : "US") as "KR" | "US";
+  const rawLimit = Number.parseInt(query["limit"] ?? "", 10);
+  const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 20) : 8;
+  if (!q) return { status: 200, body: { articles: [] } };
+  try {
+    const articles = await fetchNews({ q, market, limit });
+    return { status: 200, body: { articles } };
+  } catch {
+    return { status: 200, body: { articles: [] } };
+  }
+}
+
 /** Coerce a free-form market query param to a MarketGroup ('ALL' default). */
 function parseMarketGroup(raw: string | undefined): MarketGroup {
   const v = (raw ?? "ALL").toUpperCase();
@@ -296,6 +319,7 @@ export async function route(
   if (pathname === "/api/picks/today") return handlePicksToday(query, deps);
   if (pathname === "/api/search") return handleSearch(query, deps);
   if (pathname === "/api/discover") return handleDiscover(query, deps);
+  if (pathname === "/api/news") return handleNews(query, deps);
   if (pathname === "/api/quotes") return handleQuotes(query, deps);
   if (pathname === "/api/history") return handleHistory(query, deps);
   if (pathname === "/api/scorecard/timing") return handleTimingAccuracy(query, deps);

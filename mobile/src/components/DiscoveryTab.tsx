@@ -15,6 +15,7 @@ import { tokens } from "../theme/tokens";
 import { SecuritySearchCard } from "./SecuritySearchCard";
 import { StockDetailSheet, type StockDetailTarget } from "./StockDetailSheet";
 import { TodaysPicksSection, type PicksMarketLoader } from "./TodaysPicksSection";
+import { NewsSection } from "./NewsSection";
 import type { PersonaConfig } from "../persona/types";
 import { useDiscovery } from "../screens/useDiscovery";
 import type { DiscoveryLoader, DiscoveryMarket } from "../data/discoveryClient";
@@ -230,6 +231,16 @@ export function DiscoveryTab({
               ※ 시총 상위 초대형주는 모멘텀 카테고리에서 제외합니다 — 아무 데서나 얻는 정보는 이 제품의 엣지가 아닙니다.
             </Text>
           </View>
+
+          {/* 시장 속보 — 오늘 시장 맥락(왜). 검증 출처(주요 언론사)만. */}
+          <NewsSection
+            q={d.market === "KR" ? "코스피 코스닥 증시" : "US stock market"}
+            market={d.market}
+            title="📰 시장 속보"
+            subtitle="오늘 시장 흐름의 맥락 — 주요 언론사 기준"
+            limit={6}
+            testID={`${testID}-news`}
+          />
 
           {CATEGORY_ORDER.map((cat) => (
             <CategorySection

@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { View, Modal, Pressable, Text, ScrollView, ActivityIndicator, StyleSheet } from "react-native";
 import { tokens } from "../theme/tokens";
 import { PriceChart } from "./PriceChart";
+import { NewsSection } from "./NewsSection";
 import { marketDirectionColor, directionOf, changeArrow } from "./marketColors";
 import { fmtSignedPct } from "../formatters";
 import { fetchHistory, type HistoryLoader } from "../data/historyClient";
@@ -230,6 +231,15 @@ export function StockDetailSheet({
                 <Text style={styles.descText}>{target.description.trim()}</Text>
               </View>
             ) : null}
+
+            {/* 관련 뉴스 — 타이밍 판단의 맥락(왜). 검증 출처(공시·주요 언론사)만. */}
+            <NewsSection
+              q={target.name}
+              market={group}
+              title="관련 뉴스"
+              subtitle="타이밍 판단의 맥락 — 공시·주요 언론사 기준"
+              testID={`${testID}-news`}
+            />
 
             {/* ＋관심 / ＋보유 */}
             <View style={styles.actions}>
